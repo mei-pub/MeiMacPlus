@@ -31,9 +31,20 @@ final class CmdQInterceptor {
     private(set) var isRunning = false
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    /// True between an accepted key-down and the matching key-up/command-up;
-    /// all ⌘Q events in this window are swallowed (including auto-repeats).
+    /// True between an accepted key-down and the matching key-up;
+    /// all Q events in this window are swallowed (including auto-repeats).
     private var swallowing = false
+    /// Set when a session began while polling confirmed the physical key
+    /// state API works; `nil` means "cannot be trusted" for the safety net.
+    private var keyStateCalibrated: Bool?
+
+    /// Whether the Q key is physically down right now, if that can be
+    /// determined reliably. Used as a safety net in case the key-up event
+    /// is ever lost (tap disabled mid-session, Secure Input, …).
+    func qKeyIsPhysicallyDown() -> Bool? {
+        guard keyStateCalibrated == true else { return nil }
+        return CGEventSource.keyState(.combinedSessionState, key: Self.keyCodeQ)
+    }
 
     deinit {
         stop()
@@ -98,12 +109,16 @@ final class CmdQInterceptor {
             return Unmanaged.passRetained(event)
 
         case .tapDisabledByUserInput:
+            // E.g. Secure Input toggled; try to revive so the session end is still observed.
+            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return Unmanaged.passRetained(event)
 
         case .flagsChanged:
             let commandDown = event.flags.contains(.maskCommand)
+            // The delegate cancels the hold, but we keep swallowing Q events
+            // until the actual key-up, so stray "q" characters never leak
+            // into the frontmost app when Command is released first.
             if !commandDown && swallowing {
-                swallowing = false
                 MainActor.assumeIsolated {
                     self.delegate?.interceptorCommandWasReleased()
                 }
@@ -115,17 +130,23 @@ final class CmdQInterceptor {
             guard keyCode == Self.keyCodeQ else { return Unmanaged.passRetained(event) }
 
             if type == .keyDown {
+                // Swallow repeats (and any stray key-downs) while a session is
+                // active — including plain "q" repeats after Command was
+                // released early.
+                if swallowing { return nil }
                 guard event.flags.contains(.maskCommand) else {
                     return Unmanaged.passRetained(event) // plain "q" — none of our business
                 }
-                // Swallow repeats (and any stray key-downs) while a session is active.
-                if swallowing { return nil }
                 let frontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
                 let shouldIntercept = MainActor.assumeIsolated {
                     self.delegate?.interceptorRequestsIntercept(frontmostBundleID: frontmost) ?? false
                 }
                 if shouldIntercept {
                     swallowing = true
+                    // Calibrate physical key-state polling: at this instant the
+                    // Q key is definitely down, so a `false` here means the API
+                    // is unreliable and the safety net must stay out of the way.
+                    keyStateCalibrated = CGEventSource.keyState(.combinedSessionState, key: keyCode)
                     MainActor.assumeIsolated {
                         self.delegate?.interceptorDidBeginHold()
                     }

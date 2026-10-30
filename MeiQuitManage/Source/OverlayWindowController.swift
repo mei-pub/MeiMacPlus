@@ -91,10 +91,15 @@ final class OverlayWindowController {
 
     private var panel: NSPanel?
     private let model = OverlayModel()
+    /// Bumped by every show/hide; pending removal work is discarded when a
+    /// newer show supersedes it, so a fast re-show can never be ordered out
+    /// by a stale hide.
+    private var generation = 0
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
     func show(app: NSRunningApplication?, delay: TimeInterval) {
+        generation += 1
         let view = OverlayView(model: model)
         let hosting = NSHostingView(rootView: view)
 
@@ -167,12 +172,31 @@ final class OverlayWindowController {
     }
 
     func hide() {
-        guard let p = panel, p.isVisible else { return }
-        NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
-            p.animator().alphaValue = 0
-        }, completionHandler: {
+        guard let p = panel else { return }
+        generation += 1
+        let myGeneration = generation
+
+        guard p.isVisible else {
+            p.alphaValue = 0
             p.orderOut(nil)
-        })
+            return
+        }
+
+        let fade = 0.12
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = fade
+            p.animator().alphaValue = 0
+        }
+        // Deterministic removal: never depend on the animation completion
+        // handler (window animator animations do not reliably report
+        // completion), and never remove a newer session's panel.
+        DispatchQueue.main.asyncAfter(deadline: .now() + fade + 0.05) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.generation == myGeneration else { return }
+                if p.alphaValue < 0.05 {
+                    p.orderOut(nil)
+                }
+            }
+        }
     }
 }

@@ -43,6 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Single instance
 
     private func ensureSingleInstance() -> Bool {
+        // The unit-test host must not terminate itself when the app is
+        // already running.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else {
+            return true
+        }
         guard let myID = Bundle.main.bundleIdentifier else { return true }
         let others = NSWorkspace.shared.runningApplications
             .filter { $0.bundleIdentifier == myID && $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
@@ -208,6 +213,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func tick() {
         guard let e = engine else { return }
         e.update()
+
+        // Safety net: if the release notifications were ever lost (tap
+        // disabled mid-session, Secure Input, …) the overlay would linger.
+        // Poll the real key state and end the session ourselves.
+        if e.phase == .holding {
+            let commandDown = NSEvent.modifierFlags.contains(.command)
+            let qDown = interceptor.qKeyIsPhysicallyDown()
+            if !commandDown || (qDown == false) {
+                endSession(cancel: true)
+                return
+            }
+        }
+
         if settings.displayOverlay, e.phase == .holding {
             overlay.update(fraction: e.fraction, remaining: e.remaining)
         }
