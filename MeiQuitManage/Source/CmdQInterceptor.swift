@@ -1,6 +1,10 @@
 import AppKit
 import CoreGraphics
 import ApplicationServices
+import os
+import QuartzCore
+
+let interceptorLog = Logger(subsystem: "com.meiquit.MeiQuitManage", category: "intercept")
 
 /// Receives the high-level events of the interception lifecycle.
 /// The tap source runs on the main run loop, so all requirements are
@@ -34,6 +38,9 @@ final class CmdQInterceptor {
     /// True between an accepted key-down and the matching key-up;
     /// all Q events in this window are swallowed (including auto-repeats).
     private var swallowing = false
+    /// When the current swallow window opened; used to self-heal a window
+    /// left open by a lost key-up event.
+    private var swallowingSince: TimeInterval = 0
     /// Set when a session began while polling confirmed the physical key
     /// state API works; `nil` means "cannot be trusted" for the safety net.
     private var keyStateCalibrated: Bool?
@@ -46,6 +53,15 @@ final class CmdQInterceptor {
         return CGEventSource.keyState(.combinedSessionState, key: Self.keyCodeQ)
     }
 
+    /// Release the swallow window out-of-band (key state proves Q is up, so
+    /// no key-up can arrive to do it).
+    func forceResetSwallowing(reason: String) {
+        if swallowing {
+            interceptorLog.notice("force reset swallow window: \(reason, privacy: .public)")
+            swallowing = false
+        }
+    }
+
     deinit {
         stop()
     }
@@ -55,7 +71,10 @@ final class CmdQInterceptor {
     @discardableResult
     func start() -> Bool {
         guard !isRunning else { return true }
-        guard Self.isProcessTrusted() else { return false }
+        guard Self.isProcessTrusted() else {
+            interceptorLog.error("start aborted: not trusted for accessibility")
+            return false
+        }
 
         let mask = (1 << CGEventType.keyDown.rawValue)
             | (1 << CGEventType.keyUp.rawValue)
@@ -69,8 +88,10 @@ final class CmdQInterceptor {
             callback: interceptorTapCallback,
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
+            interceptorLog.error("start aborted: CGEvent.tapCreate returned nil")
             return false
         }
+        interceptorLog.notice("event tap created")
 
         tap = eventTap
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
@@ -105,11 +126,13 @@ final class CmdQInterceptor {
         switch type {
         case .tapDisabledByTimeout:
             // Slow callback responses can disable the tap; revive it.
+            interceptorLog.error("tap disabled by timeout — re-enabling")
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return Unmanaged.passRetained(event)
 
         case .tapDisabledByUserInput:
             // E.g. Secure Input toggled; try to revive so the session end is still observed.
+            interceptorLog.error("tap disabled by user input — re-enabling")
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return Unmanaged.passRetained(event)
 
@@ -119,6 +142,7 @@ final class CmdQInterceptor {
             // until the actual key-up, so stray "q" characters never leak
             // into the frontmost app when Command is released first.
             if !commandDown && swallowing {
+                interceptorLog.notice("command released during hold — cancel session")
                 MainActor.assumeIsolated {
                     self.delegate?.interceptorCommandWasReleased()
                 }
@@ -132,8 +156,15 @@ final class CmdQInterceptor {
             if type == .keyDown {
                 // Swallow repeats (and any stray key-downs) while a session is
                 // active — including plain "q" repeats after Command was
-                // released early.
-                if swallowing { return nil }
+                // released early. A window left open by a lost key-up self-heals.
+                if swallowing {
+                    if CACurrentMediaTime() - swallowingSince > 5 {
+                        interceptorLog.error("stale swallow window (\(self.swallowingSince, privacy: .public)) — self-healing")
+                        swallowing = false
+                    } else {
+                        return nil
+                    }
+                }
                 guard event.flags.contains(.maskCommand) else {
                     return Unmanaged.passRetained(event) // plain "q" — none of our business
                 }
@@ -143,19 +174,23 @@ final class CmdQInterceptor {
                 }
                 if shouldIntercept {
                     swallowing = true
+                    swallowingSince = CACurrentMediaTime()
                     // Calibrate physical key-state polling: at this instant the
                     // Q key is definitely down, so a `false` here means the API
                     // is unreliable and the safety net must stay out of the way.
                     keyStateCalibrated = CGEventSource.keyState(.combinedSessionState, key: keyCode)
+                    interceptorLog.notice("intercept ⌘Q (frontmost: \(frontmost ?? "nil", privacy: .public), keyStateCalibrated: \(self.keyStateCalibrated == true))")
                     MainActor.assumeIsolated {
                         self.delegate?.interceptorDidBeginHold()
                     }
                     return nil
                 }
+                interceptorLog.notice("pass through ⌘Q (frontmost: \(frontmost ?? "nil", privacy: .public))")
                 return Unmanaged.passRetained(event)
             } else {
                 if swallowing {
                     swallowing = false
+                    interceptorLog.notice("key up — release swallow window")
                     MainActor.assumeIsolated {
                         self.delegate?.interceptorDidReceiveKeyUp()
                     }

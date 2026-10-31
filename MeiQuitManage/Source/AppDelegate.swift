@@ -1,4 +1,7 @@
 import AppKit
+import os
+
+let sessionLog = Logger(subsystem: "com.meiquit.MeiQuitManage", category: "session")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -15,6 +18,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var engine: HoldEngine?
     private var ticker: Timer?
     private var targetApp: NSRunningApplication?
+    private var trustWatchdog: Timer?
+    private var lastKnownTrusted: Bool?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard ensureSingleInstance() else {
@@ -28,14 +33,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.settingsDidChange(change)
         }
 
-        if !CmdQInterceptor.isProcessTrusted() {
+        let trusted = CmdQInterceptor.isProcessTrusted()
+        lastKnownTrusted = trusted
+        if !trusted {
+            sessionLog.error("launch: NOT trusted for accessibility — showing guide")
             showPermissionGuide()
         } else {
+            sessionLog.notice("launch: trusted for accessibility")
+            activateInterceptionIfDesired()
+        }
+
+        // Watchdog: the user may grant (or revoke) accessibility at any time,
+        // including after closing the guide window. Pick up trust changes
+        // automatically instead of requiring a relaunch or menu toggle.
+        let watchdog = Timer(timeInterval: 3.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.trustDidChange()
+            }
+        }
+        RunLoop.main.add(watchdog, forMode: .common)
+        trustWatchdog = watchdog
+        sessionLog.notice("trust watchdog armed")
+    }
+
+    private func trustDidChange() {
+        let trusted = CmdQInterceptor.isProcessTrusted()
+        guard trusted != lastKnownTrusted else { return }
+        lastKnownTrusted = trusted
+        sessionLog.notice("trust state changed: \(trusted, privacy: .public)")
+        menuBar.refresh()
+        if trusted {
             activateInterceptionIfDesired()
         }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        trustWatchdog?.invalidate()
         interceptor.stop()
         endSession(cancel: true)
     }
@@ -102,13 +135,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func activateInterceptionIfDesired() {
         guard settings.enabled else {
-            if interceptor.isRunning { interceptor.stop() }
+            if interceptor.isRunning {
+                sessionLog.notice("protection paused — stopping tap")
+                interceptor.stop()
+            }
             return
         }
         guard CmdQInterceptor.isProcessTrusted() else { return }
         if !interceptor.isRunning {
             if !interceptor.start() {
-                NSLog("MeiQuitManage: failed to create event tap")
+                sessionLog.error("failed to start interception")
             }
         }
     }
@@ -174,13 +210,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func interceptorDidReceiveKeyUp() {
-        if engine?.phase == .holding {
+        // Any active session ends on release, whatever its phase.
+        if engine != nil {
             endSession(cancel: true)
         }
     }
 
     func interceptorCommandWasReleased() {
-        if engine?.phase == .holding {
+        if engine != nil {
             endSession(cancel: true)
         }
     }
@@ -188,11 +225,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Hold session
 
     private func beginSession() {
-        guard engine == nil else { return }
+        guard engine == nil else {
+            sessionLog.notice("session already active — ignoring begin")
+            return
+        }
+        sessionLog.notice("session begin (delay \(self.settings.delayMilliseconds)ms)")
         let e = HoldEngine(delay: settings.delaySeconds)
         e.onFired = { [weak self] in
             self?.fireQuit()
         }
+        e.begin()
         engine = e
         targetApp = NSWorkspace.shared.frontmostApplication
 
@@ -221,6 +263,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let commandDown = NSEvent.modifierFlags.contains(.command)
             let qDown = interceptor.qKeyIsPhysicallyDown()
             if !commandDown || (qDown == false) {
+                sessionLog.notice("safety net: release detected (cmdDown=\(commandDown), qDown=\(String(describing: qDown)), elapsed=\(e.elapsed)) — cancel")
+                if qDown == false {
+                    interceptor.forceResetSwallowing(reason: "key state shows Q released")
+                }
                 endSession(cancel: true)
                 return
             }
@@ -234,6 +280,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func fireQuit() {
         // The engine has fired; stop ticking, flash the overlay, and ask the
         // frontmost app to quit gracefully.
+        sessionLog.notice("session fired — quitting \(self.targetApp?.bundleIdentifier ?? "nil", privacy: .public)")
         ticker?.invalidate()
         ticker = nil
 
@@ -251,6 +298,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func endSession(cancel: Bool) {
+        sessionLog.notice("session end (cancel=\(cancel))")
         ticker?.invalidate()
         ticker = nil
         engine?.cancel()
