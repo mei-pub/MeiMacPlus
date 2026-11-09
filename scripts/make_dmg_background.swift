@@ -67,13 +67,13 @@ satellite.stroke()
 ctx.restoreGState()
 
 // Title + tagline.
-let title = NSAttributedString(string: "MeiQuitManage", attributes: [
+let title = NSAttributedString(string: "MeiMacPlus", attributes: [
     .font: NSFont.systemFont(ofSize: 46, weight: .bold),
     .foregroundColor: NSColor(calibratedRed: 0.12, green: 0.17, blue: 0.30, alpha: 1),
 ])
 title.draw(at: NSPoint(x: 90, y: height - 110))
 
-let tagline = NSAttributedString(string: L0("meiquit.dmg.tagline"), attributes: [
+let tagline = NSAttributedString(string: L0("meimacplus.dmg.tagline"), attributes: [
     .font: NSFont.systemFont(ofSize: 22, weight: .regular),
     .foregroundColor: NSColor(calibratedRed: 0.24, green: 0.31, blue: 0.47, alpha: 0.85),
 ])
@@ -84,7 +84,7 @@ tagline.draw(at: NSPoint(x: 92, y: height - 150))
 let zoneRect1 = NSRect(x: 170, y: 210, width: 380, height: 380)
 let zoneRect2 = NSRect(x: 830, y: 210, width: 380, height: 380)
 
-for (zone, label) in [(zoneRect1, L0("meiquit.dmg.dropApp")), (zoneRect2, L0("meiquit.dmg.dropApplications"))] {
+for (zone, label) in [(zoneRect1, L0("meimacplus.dmg.dropApp")), (zoneRect2, L0("meimacplus.dmg.dropApplications"))] {
     let plate = NSBezierPath(roundedRect: zone, xRadius: 44, yRadius: 44)
     NSColor(calibratedWhite: 1, alpha: 0.45).setFill()
     plate.fill()
@@ -132,15 +132,15 @@ func L0(_ key: String) -> String {
     switch preferred.first {
     case "zh-Hans":
         value = [
-            "meiquit.dmg.tagline": "按住 ⌘Q，告别误触退出",
-            "meiquit.dmg.dropApp": "拖动应用",
-            "meiquit.dmg.dropApplications": "到此处安装",
+            "meimacplus.dmg.tagline": "按住 ⌘Q，告别误触退出",
+            "meimacplus.dmg.dropApp": "拖动应用",
+            "meimacplus.dmg.dropApplications": "到此处安装",
         ][key] ?? key
     default:
         value = [
-            "meiquit.dmg.tagline": "Hold ⌘Q — no more accidental quits",
-            "meiquit.dmg.dropApp": "Drag the app",
-            "meiquit.dmg.dropApplications": "into Applications",
+            "meimacplus.dmg.tagline": "Hold ⌘Q — no more accidental quits",
+            "meimacplus.dmg.dropApp": "Drag the app",
+            "meimacplus.dmg.dropApplications": "into Applications",
         ][key] ?? key
     }
     return value

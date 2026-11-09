@@ -1,9 +1,9 @@
 #!/usr/bin/env swift
 //
-// make_icon.swift — renders the MeiQuitManage app icon (1024×1024 PNG).
+// make_icon.swift — renders the MeiMacPlus app icon (1024×1024 PNG).
 //
 // Design: minimal "liquid glass" — a light frosted plate, a thin progress
-// ring echoing the hold-to-quit countdown, and a small rounded "Q".
+// ring echoing the hold-to-quit countdown, and a small rounded "M+".
 //
 // Usage: swift make_icon.swift <output.png>
 
@@ -194,22 +194,22 @@ for angle in [90.0, 90.0 - 268.0] {
     dot.fill()
 }
 
-// MARK: 8. The "Q"
+// MARK: 8. The "M+"
 
-let qDescriptor = NSFont.systemFont(ofSize: 1, weight: .semibold)
+let glyphDescriptor = NSFont.systemFont(ofSize: 1, weight: .semibold)
     .fontDescriptor
     .withDesign(.rounded)
-let qFont = qDescriptor.flatMap { NSFont(descriptor: $0, size: 236) }
-let qAttributes: [NSAttributedString.Key: Any] = [
-    .font: qFont ?? NSFont.systemFont(ofSize: 236, weight: .semibold),
+let glyphFont = glyphDescriptor.flatMap { NSFont(descriptor: $0, size: 185) }
+let glyphAttributes: [NSAttributedString.Key: Any] = [
+    .font: glyphFont ?? NSFont.systemFont(ofSize: 185, weight: .semibold),
     .foregroundColor: NSColor(calibratedRed: 0.13, green: 0.17, blue: 0.29, alpha: 0.93),
 ]
-let qString = NSAttributedString(string: "Q", attributes: qAttributes)
-let qSize = qString.size()
-// Optical centering: nudge right/down a touch to account for the Q's bowl.
-qString.draw(at: NSPoint(
-    x: center.x - qSize.width / 2 + 7,
-    y: center.y - qSize.height / 2 - 10
+let glyphString = NSAttributedString(string: "M+", attributes: glyphAttributes)
+let glyphSize = glyphString.size()
+// Optical centering: the "+" makes the pair slightly top-heavy; nudge down.
+glyphString.draw(at: NSPoint(
+    x: center.x - glyphSize.width / 2,
+    y: center.y - glyphSize.height / 2 - 8
 ))
 
 // MARK: 9. Export

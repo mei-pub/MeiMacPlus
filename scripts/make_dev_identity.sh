@@ -1,6 +1,6 @@
 #!/bin/bash
 # make_dev_identity.sh — create a stable self-signed code-signing identity
-# for local development builds ("MeiQuitManage Dev").
+# for local development builds ("MeiMacPlus Dev").
 #
 # Why: ad-hoc signatures change on every rebuild, so macOS TCC keeps
 # forgetting the Accessibility grant. Signing dev builds with this fixed
@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-NAME="MeiQuitManage Dev"
+NAME="MeiMacPlus Dev"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "$NAME"; then

@@ -1,25 +1,25 @@
 #!/bin/bash
-# make_dmg.sh — build the MeiQuitManage disk image.
+# make_dmg.sh — build the MeiMacPlus disk image.
 #
-# Produces dist/MeiQuitManage-<version>.dmg with a styled background,
+# Produces dist/MeiMacPlus-<version>.dmg with a styled background,
 # an /Applications symlink, and fixed icon positions (Finder view options).
 # Falls back to a plain compressed image if Finder automation is denied.
 #
-# Usage: make_dmg.sh [path-to-MeiQuitManage.app]
+# Usage: make_dmg.sh [path-to-MeiMacPlus.app]
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="${1:-$ROOT/build/DerivedData/Build/Products/Release/MeiQuitManage.app}"
+APP_PATH="${1:-$ROOT/build/DerivedData/Build/Products/Release/MeiMacPlus.app}"
 DIST="$ROOT/dist"
 STAGING="$ROOT/build/dmg-staging"
-RW_DMG="$ROOT/build/MeiQuitManage-rw.dmg"
+RW_DMG="$ROOT/build/MeiMacPlus-rw.dmg"
 
 [ -d "$APP_PATH" ] || { echo "app not found: $APP_PATH (build it first)" >&2; exit 1; }
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")"
-VOLNAME="MeiQuitManage"
-FINAL_DMG="$DIST/MeiQuitManage-$VERSION.dmg"
+VOLNAME="MeiMacPlus"
+FINAL_DMG="$DIST/MeiMacPlus-$VERSION.dmg"
 
 mkdir -p "$DIST" "$STAGING"
 rm -rf "$STAGING/$VOLNAME"
@@ -61,7 +61,7 @@ tell application "Finder"
     set arrangement of theViewOptions to not arranged
     set icon size of theViewOptions to 110
     set background picture of theViewOptions to file ".background:background.png"
-    set position of item "MeiQuitManage.app" of container window to {300, 310}
+    set position of item "MeiMacPlus.app" of container window to {300, 310}
     set position of item "Applications" of container window to {620, 310}
     close
     open

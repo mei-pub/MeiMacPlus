@@ -1,15 +1,15 @@
 #!/bin/bash
 # make_iconset.sh — from the master 1024px icon PNG, produce:
 #   1. Full macOS appiconset (all slots) for the asset catalog
-#   2. A standalone MeiQuitManage.icns via iconutil
+#   2. A standalone MeiMacPlus.icns via iconutil
 # Usage: make_iconset.sh <master_1024.png>
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MASTER="${1:-$ROOT/build/appicon_1024.png}"
 ICONSET_DIR="$ROOT/build/AppIcon.iconset"
-APPICONSET_DIR="$ROOT/MeiQuitManage/Resources/Assets.xcassets/AppIcon.appiconset"
-ICNS_OUT="$ROOT/build/MeiQuitManage.icns"
+APPICONSET_DIR="$ROOT/MeiMacPlus/Resources/Assets.xcassets/AppIcon.appiconset"
+ICNS_OUT="$ROOT/build/MeiMacPlus.icns"
 
 [ -f "$MASTER" ] || { echo "master icon not found: $MASTER" >&2; exit 1; }
 
