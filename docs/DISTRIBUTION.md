@@ -1,6 +1,29 @@
 # 分发与签名指南
 
-## 当前状态
+## CI 自动发布（推荐路径）
+
+`.github/workflows/release.yml`：推送 `v*` 标签即自动 测试 → Release 构建 →
+DMG → 附到 GitHub Release；手动 dispatch 只构建并上传 artifact。
+
+```bash
+git tag v1.1.0 && git push origin v1.1.0
+```
+
+**签名模式**：
+- 无密钥（默认）：ad-hoc 签名，用户首次打开需 右键 → 打开。
+- 配置以下 5 个 repo secrets 后自动升级为 Developer ID 签名 + 公证 + 装订：
+
+| Secret | 内容 |
+| --- | --- |
+| `MACOS_CERTIFICATE` | Developer ID Application `.p12` 的 base64（`base64 -i cert.p12 \| pbcopy`） |
+| `MACOS_CERTIFICATE_PWD` | 该 .p12 的密码 |
+| `APPLE_NOTARY_KEY` | App Store Connect API key `.p8` 的 base64 |
+| `APPLE_NOTARY_KEY_ID` | Key ID |
+| `APPLE_NOTARY_ISSUER_ID` | Issuer ID |
+
+## 本地手动分发（备选）
+
+### 当前状态
 
 - DMG 内的 `MeiMacPlus.app` 为 **ad-hoc 签名**（Hardened Runtime 已开启）。
   本机自用没问题；分发给其他用户时 Gatekeeper 会拦截，需要用户右键打开或在

@@ -1,0 +1,161 @@
+name: release
+
+# Tag-driven release packaging:
+#   git tag v1.1.0 && git push origin v1.1.0
+# → runs tests, builds the Release app + styled DMG, attaches both to a
+#   GitHub Release. Manual dispatch (Actions tab) builds and uploads the DMG
+#   as a workflow artifact without cutting a release.
+#
+# Signing: without secrets the app is ad-hoc signed (first launch needs
+# right-click → Open). Add the five secrets below to enable Developer ID
+# signing + notarization automatically:
+#   MACOS_CERTIFICATE       base64-encoded .p12 of "Developer ID Application"
+#   MACOS_CERTIFICATE_PWD   that .p12's password
+#   APPLE_NOTARY_KEY        App Store Connect API key (.p8), base64
+#   APPLE_NOTARY_KEY_ID     its Key ID
+#   APPLE_NOTARY_ISSUER_ID  its Issuer ID
+# (How to produce the base64: base64 -i cert.p12 | pbcopy)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Test, build & package
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          sw_vers -productVersion
+
+      - name: Detect signing secrets
+        id: secrets
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+        run: |
+          if [ -n "$MACOS_CERTIFICATE" ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "No signing secrets found — building ad-hoc signed."
+          fi
+
+      - name: Import signing certificate
+        if: steps.secrets.outputs.has == 'true'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          CERT=$(mktemp /tmp/certificate.XXXXXX.p12)
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$CERT"
+          security create-keychain -p build build.keychain-db
+          security import "$CERT" -k build.keychain-db \
+            -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k build build.keychain-db
+          security list-keychains -d user -s build.keychain-db \
+            $(security list-keychains -d user | grep -v build.keychain-db | tr -d '"')
+          security find-identity -v -p codesigning
+
+      - name: Unit tests
+        run: |
+          set -o pipefail
+          DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+            xcodebuild -project MeiMacPlus.xcodeproj -scheme MeiMacPlus \
+            -configuration Debug -derivedDataPath build/DerivedData test 2>&1 | tail -25
+
+      - name: Build Release
+        run: |
+          set -o pipefail
+          DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+            xcodebuild -project MeiMacPlus.xcodeproj -scheme MeiMacPlus \
+            -configuration Release -derivedDataPath build/DerivedData build 2>&1 | tail -5
+          APP=build/DerivedData/Build/Products/Release/MeiMacPlus.app
+          test -x "$APP/Contents/Library/LaunchDaemons/MeiMacPlusHelper" \
+            || { echo "ERROR: helper not embedded in bundle"; exit 1; }
+
+      - name: Re-sign with Developer ID
+        if: steps.secrets.outputs.has == 'true'
+        run: |
+          APP=build/DerivedData/Build/Products/Release/MeiMacPlus.app
+          IDENTITY=$(security find-identity -v -p codesigning \
+            | awk -F'"' '/Developer ID Application/ {print $2; exit}')
+          echo "Signing with: $IDENTITY"
+          codesign --force --deep --options runtime --timestamp \
+            --sign "$IDENTITY" "$APP"
+          codesign --verify --strict "$APP"
+
+      - name: Notarize & staple
+        if: steps.secrets.outputs.has == 'true'
+        env:
+          APPLE_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          APP=build/DerivedData/Build/Products/Release/MeiMacPlus.app
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$APPLE_NOTARY_KEY" | base64 --decode \
+            > ~/.appstoreconnect/private_keys/AuthKey_${APPLE_NOTARY_KEY_ID}.p8
+          xcrun notarytool store-credentials notary-ci \
+            --key-id "$APPLE_NOTARY_KEY_ID" --issuer "$APPLE_NOTARY_ISSUER_ID"
+          ditto -c -k --keepParent "$APP" build/for-notary.zip
+          xcrun notarytool submit build/for-notary.zip --keychain-profile notary-ci --wait
+          xcrun stapler staple "$APP"
+
+      - name: Build DMG
+        run: |
+          scripts/make_dmg.sh build/DerivedData/Build/Products/Release/MeiMacPlus.app
+          ls -la dist/
+
+      - name: Checksum
+        run: |
+          DMG=$(ls dist/MeiMacPlus-*.dmg | head -1)
+          shasum -a 256 "$DMG" > "$DMG.sha256"
+          cat "$DMG.sha256"
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeiMacPlus-DMG
+          path: dist/MeiMacPlus-*.dmg*
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNED: ${{ steps.secrets.outputs.has }}
+        run: |
+          DMG=$(ls dist/MeiMacPlus-*.dmg | head -1)
+          NOTE=$(mktemp)
+          {
+            echo "## MeiMacPlus ${GITHUB_REF_NAME#v}"
+            echo
+            if [ "$SIGNED" = "true" ]; then
+              echo "Developer ID 签名 + 公证（首次打开无 Gatekeeper 警告）。"
+            else
+              echo "当前为 ad-hoc 签名构建：首次打开请右键 → 打开（或在系统设置中放行）。"
+            fi
+            echo
+            echo "- 安装：挂载 DMG，将 MeiMacPlus 拖入 Applications"
+            echo "- ⌘Q 防误退需授予辅助功能权限（首次启动有引导）"
+            echo "- 合盖不息屏首次开启需一次管理员密码（安装特权助手）"
+            echo
+            echo "校验：\`\`\`"
+            cat "$DMG.sha256"
+            echo "\`\`\`"
+          } > "$NOTE"
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" \
+                --title "MeiMacPlus ${GITHUB_REF_NAME#v}" \
+                --generate-notes --notes-file "$NOTE"
+          gh release upload "$GITHUB_REF_NAME" "$DMG" "$DMG.sha256" --clobber

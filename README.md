@@ -1,5 +1,8 @@
 # MeiMacPlus
 
+[![Release](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml/badge.svg)](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/mei-pub/MeiMacPlus)](https://github.com/mei-pub/MeiMacPlus/releases)
+
 **Mac 增强工具集：按住 ⌘Q 防误退 + 合盖不息屏。** macOS 菜单栏常驻。
 
 ⌘Q 防误退的灵感来自开源项目 [SlowQuitApps](https://github.com/dteoh/SlowQuitApps)（GPL-2.0）的行为设计；
@@ -40,12 +43,15 @@
 
 ## 安装
 
-1. 挂载 `dist/MeiMacPlus-<版本>.dmg`，将 MeiMacPlus 拖入 Applications 文件夹。
+从 [Releases](https://github.com/mei-pub/MeiMacPlus/releases) 下载最新 DMG
+（CI 自动构建；未配置签名密钥时为 ad-hoc 签名，首次打开需右键 → 打开）：
+
+1. 挂载 DMG，将 MeiMacPlus 拖入 Applications 文件夹。
 2. 首次启动按引导授予辅助功能权限。
 3. （可选）在菜单栏勾选"开机自动启动"。
 
-> 当前 DMG 为 ad-hoc 签名（开发者证书就位前）。正式分发请按
-> [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md) 用 Developer ID 签名并公证。
+发布流程：`git tag v1.1.0 && git push origin v1.1.0` → CI 自动测试、构建、
+打 DMG 并附到 GitHub Release。详见 [docs/DISTRIBUTION.md](docs/DISTRIBUTION.md)。
 
 ## 合盖不息屏是如何工作的
 
