@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import IOKit.pwr_mgt
 
 /// XPC protocol of the privileged MeiMacPlusHelper daemon.
 /// (Mirrored in MeiMacPlusHelper/Source/main.swift — keep the two in sync.)
@@ -113,6 +114,44 @@ final class KeepAwakeManager {
         let retried = await helperSet(enabled)
         guard let retried, retried.0 else {
             throw KeepAwakeError.commandFailed(retried?.2 ?? "helper did not confirm the change")
+        }
+    }
+
+    // MARK: - Display sleep assertion (open-lid "screen stays on")
+
+    /// The pmset flag only blocks *system* sleep; with the lid open the
+    /// display would still blank after the system's display-sleep timeout
+    /// (and lock). While the toggle is on we therefore also hold a
+    /// `PreventUserIdleDisplaySleep` assertion — the same mechanism Caffeine
+    /// and Awayke use — so an open lid never blanks the screen. Needs no
+    /// privileges.
+    ///
+    /// The assertion is process-scoped: it lives exactly as long as
+    /// MeiMacPlus runs. Quitting the app returns the display to the system's
+    /// own schedule, while the lid-close behavior (pmset, persistent)
+    /// remains.
+    private var displayAssertion: IOPMAssertionID?
+
+    func setDisplaySleepAssertion(_ on: Bool) {
+        if on {
+            guard displayAssertion == nil else { return }
+            var id: IOPMAssertionID = 0
+            let status = IOPMAssertionCreateWithName(
+                "PreventUserIdleDisplaySleep" as CFString,
+                IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                "MeiMacPlus — keep awake" as CFString,
+                &id
+            )
+            if status == kIOReturnSuccess {
+                displayAssertion = id
+                sessionLog.notice("display-sleep assertion created (id \(id))")
+            } else {
+                sessionLog.error("display-sleep assertion failed: \(status)")
+            }
+        } else if let id = displayAssertion {
+            IOPMAssertionRelease(id)
+            displayAssertion = nil
+            sessionLog.notice("display-sleep assertion released")
         }
     }
 

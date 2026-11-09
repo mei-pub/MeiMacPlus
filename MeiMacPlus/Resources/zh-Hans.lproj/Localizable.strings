@@ -5,7 +5,7 @@
 
 /* Menu bar */
 "menubar.tooltip" = "MeiMacPlus";
-"menubar.tooltip.awake" = "MeiMacPlus · 合盖不息屏开启中";
+"menubar.tooltip.awake" = "MeiMacPlus · 保持清醒开启中";
 "menubar.status.active" = "退出保护已启用";
 "menubar.status.paused" = "退出保护已暂停";
 "menubar.status.noPermission" = "需要辅助功能权限";
@@ -15,7 +15,7 @@
 "menubar.delay.custom" = "自定义…";
 "menubar.settings" = "设置…";
 "menubar.launchAtLogin" = "开机自动启动";
-"menubar.keepAwake" = "合盖不息屏";
+"menubar.keepAwake" = "保持清醒";
 "menubar.grantPermission" = "授予辅助功能权限…";
 "menubar.about" = "关于 %@";
 "menubar.quit" = "退出 %@";
@@ -49,10 +49,10 @@
 "settings.whitelist.manualPlaceholder" = "Bundle ID，如 com.apple.Safari";
 "settings.whitelist.add" = "添加";
 
-/* 合盖不息屏 */
-"settings.section.keepAwake" = "合盖不息屏";
-"settings.keepAwake" = "合盖时保持运行（熄屏、不休眠、不断网）";
-"settings.keepAwake.footer" = "开启后合上 MacBook 盖子：屏幕熄灭，但系统不休眠、网络与应用持续运行。首次开启需输入管理员密码安装一个小的后台助手，之后切换即时生效；关闭开关即恢复系统默认。注意：开启期间系统不会自动或手动休眠，电池模式下合盖长时间运行请注意散热。";
+/* 保持清醒 */
+"settings.section.keepAwake" = "保持清醒";
+"settings.keepAwake" = "屏幕常亮；合盖仅熄屏，不休眠、不断网";
+"settings.keepAwake.footer" = "开启后：未合盖时屏幕保持常亮，不再自动黑屏、无需唤醒；合上盖子仅熄屏，系统不休眠、网络与应用持续运行，重新开盖立即恢复，无需验证。屏幕常亮由 MeiMacPlus 运行期间维持，退出 App 后屏幕回到系统设置（合盖行为仍保持）。首次开启需输入管理员密码安装后台助手；关闭开关即全部恢复系统默认。注意：开启期间系统不会自动或手动休眠，电池模式请留意散热；若同时运行其他防休眠工具（如 Awayke）会互相覆盖。";
 "keepawake.error.title" = "未能修改合盖不息屏设置";
 "keepawake.error.body" = "发生错误：%@\n开关已恢复为系统当前状态。";
 

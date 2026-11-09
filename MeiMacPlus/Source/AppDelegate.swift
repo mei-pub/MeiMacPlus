@@ -76,6 +76,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         trustWatchdog?.invalidate()
         interceptor.stop()
         endSession(cancel: true)
+        // Process-scoped anyway; release explicitly for tidiness.
+        KeepAwakeManager.shared.setDisplaySleepAssertion(false)
     }
 
     // MARK: - Single instance
@@ -161,23 +163,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Keep awake (lid closed)
 
-    /// The toggle's stored value must reflect what the system actually does:
-    /// the setting survives app quits and reboots, so at launch we read the
-    /// real `pmset` state (unprivileged) and adopt it.
-    private func syncKeepAwakeFromSystem() {
-        Task {
-            let actual = await Task.detached(priority: .utility) {
-                KeepAwakeManager.readSystemDisablesSleep()
-            }.value
-            guard let actual, actual != settings.keepAwakeOnLidClose else { return }
-            sessionLog.notice("keep-awake synced from system: \(actual, privacy: .public)")
-            applyingKeepAwake = true
-            settings.keepAwakeOnLidClose = actual
-            applyingKeepAwake = false
-            menuBar.refresh()
-        }
-    }
-
     private func applyKeepAwake() {
         guard !applyingKeepAwake else { return }
         let desired = settings.keepAwakeOnLidClose
@@ -185,6 +170,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await KeepAwakeManager.shared.apply(desired)
+                // pmset layer confirmed; now hold the display-sleep
+                // assertion so an open lid never blanks the screen.
+                KeepAwakeManager.shared.setDisplaySleepAssertion(desired)
             } catch KeepAwakeManager.KeepAwakeError.cancelled {
                 sessionLog.notice("keep-awake change cancelled by user")
                 revertKeepAwake()
@@ -196,11 +184,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The toggle's stored value must reflect what the system actually does:
+    /// the setting survives app quits and reboots, so at launch we read the
+    /// real `pmset` state (unprivileged) and adopt it.
+    private func syncKeepAwakeFromSystem() {
+        Task {
+            let actual = await Task.detached(priority: .utility) {
+                KeepAwakeManager.readSystemDisablesSleep()
+            }.value
+            guard let actual else { return }
+            if actual != settings.keepAwakeOnLidClose {
+                sessionLog.notice("keep-awake synced from system: \(actual, privacy: .public)")
+                applyingKeepAwake = true
+                settings.keepAwakeOnLidClose = actual
+                applyingKeepAwake = false
+            }
+            // The display-sleep assertion is process-scoped and must be
+            // re-created on every launch, whatever the stored value says.
+            KeepAwakeManager.shared.setDisplaySleepAssertion(actual)
+            menuBar.refresh()
+        }
+    }
+
     /// Puts the toggle back to the (unchanged) system state.
     private func revertKeepAwake() {
         applyingKeepAwake = true
         settings.keepAwakeOnLidClose.toggle()
         applyingKeepAwake = false
+        KeepAwakeManager.shared.setDisplaySleepAssertion(settings.keepAwakeOnLidClose)
         menuBar.refresh()
     }
 

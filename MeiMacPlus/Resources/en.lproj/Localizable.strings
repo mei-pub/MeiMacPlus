@@ -5,7 +5,7 @@
 
 /* Menu bar */
 "menubar.tooltip" = "MeiMacPlus";
-"menubar.tooltip.awake" = "MeiMacPlus · lid-close keep awake ON";
+"menubar.tooltip.awake" = "MeiMacPlus · keep awake ON";
 "menubar.status.active" = "Protection active";
 "menubar.status.paused" = "Protection paused";
 "menubar.status.noPermission" = "Accessibility permission needed";
@@ -15,7 +15,7 @@
 "menubar.delay.custom" = "Custom…";
 "menubar.settings" = "Settings…";
 "menubar.launchAtLogin" = "Launch at Login";
-"menubar.keepAwake" = "Keep Awake When Lid Closed";
+"menubar.keepAwake" = "Keep Awake";
 "menubar.grantPermission" = "Grant Accessibility Permission…";
 "menubar.about" = "About %@";
 "menubar.quit" = "Quit %@";
@@ -49,10 +49,10 @@
 "settings.whitelist.manualPlaceholder" = "Bundle ID, e.g. com.apple.Safari";
 "settings.whitelist.add" = "Add";
 
-/* Keep awake (lid closed) */
-"settings.section.keepAwake" = "Lid-Closed Keep Awake";
-"settings.keepAwake" = "Keep running with the lid closed (screen off, no sleep, network on)";
-"settings.keepAwake.footer" = "Closing your MacBook's lid turns the screen off, but the system stays awake: no sleep, network and apps keep running. The first time you enable this, macOS asks for an administrator password to install a small background helper; every toggle afterwards is instant, and turning it off restores system defaults. Note: while enabled the Mac won't sleep automatically or manually — mind heat build-up when running closed on battery.";
+/* Keep awake */
+"settings.section.keepAwake" = "Keep Awake";
+"settings.keepAwake" = "Keep the screen on; closing the lid only blanks the display (no sleep, no network loss)";
+"settings.keepAwake.footer" = "While on: an open lid never blanks the screen — no idle blackout, no wake-up needed. Closing the lid only turns the display off: the system stays awake, network and apps keep running, and reopening the lid resumes instantly with no lock screen. Screen-on is maintained while MeiMacPlus runs; the lid-close behavior is a system setting that persists across restarts and app quits. First enable asks once for an administrator password to install a background helper; turning the switch off restores all system defaults. Note: the Mac won't sleep automatically or manually while enabled — mind heat on battery, and other keep-awake tools (e.g. Awayke) will fight over the same setting.";
 "keepawake.error.title" = "Could not change the keep-awake setting";
 "keepawake.error.body" = "An error occurred: %@\nThe switch was put back to the current system state.";
 
