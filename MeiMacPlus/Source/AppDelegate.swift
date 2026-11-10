@@ -111,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         endSession(cancel: true)
         // Process-scoped anyway; release explicitly for tidiness.
         KeepAwakeManager.shared.setDisplaySleepAssertion(false)
+        VirtualDisplayManager.shared.destroy()
         // The lock-screen override MUST not outlive the app. The restore is
         // async XPC; wait for it (bounded) — applyScreenLockOverride and the
         // helper RPCs are nonisolated, so a detached task can't deadlock on
@@ -214,19 +215,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             do {
                 try await KeepAwakeManager.shared.apply(desired)
                 // pmset layer confirmed; now the display-sleep assertion
-                // (open lid stays lit) and the lock-screen override (open
-                // lid needs no password).
+                // (open lid stays lit) and the virtual display (lid close
+                // migrates the session onto it, so the internal panel's
+                // power-off never becomes a sleep event -> no lock).
                 KeepAwakeManager.shared.setDisplaySleepAssertion(desired)
+                if desired {
+                    VirtualDisplayManager.shared.create()
+                } else {
+                    VirtualDisplayManager.shared.destroy()
+                }
                 try await KeepAwakeManager.shared.applyScreenLockOverride(desired)
             } catch KeepAwakeManager.KeepAwakeError.cancelled {
                 sessionLog.notice("keep-awake change cancelled by user")
                 revertKeepAwake()
             } catch let error as KeepAwakeManager.KeepAwakeError {
                 if case .screenLockChannelBroken = error {
-                    // pmset + assertion already succeeded — keep the toggle
-                    // on and explain the limitation once.
-                    sessionLog.error("screen-lock channel broken: \(String(describing: error), privacy: .public)")
-                    alertKeepAwakeFailure(error)
+                    // pmset + assertion + virtual display already succeeded —
+                    // keep the toggle on. The limitation is documented in the
+                    // settings footer; alert only the very first time.
+                    sessionLog.error("screen-lock channel broken (suppression active): \(String(describing: error), privacy: .public)")
+                    if !UserDefaults.standard.bool(forKey: "keepAwakeBrokenNoticeShown") {
+                        UserDefaults.standard.set(true, forKey: "keepAwakeBrokenNoticeShown")
+                        alertKeepAwakeFailure(error)
+                    }
                 } else {
                     sessionLog.error("keep-awake change failed: \(String(describing: error), privacy: .public)")
                     alertKeepAwakeFailure(error)
@@ -258,6 +269,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // The display-sleep assertion is process-scoped and must be
             // re-created on every launch, whatever the stored value says.
             KeepAwakeManager.shared.setDisplaySleepAssertion(actual)
+            // The virtual display is likewise process-scoped.
+            if actual {
+                VirtualDisplayManager.shared.create()
+            } else {
+                VirtualDisplayManager.shared.destroy()
+            }
             // Lock-screen override follows; also recovers a saved pre-override
             // value if the app died while it was active.
             Task {
@@ -274,6 +291,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyingKeepAwake = false
         let actual = settings.keepAwakeOnLidClose
         KeepAwakeManager.shared.setDisplaySleepAssertion(actual)
+        if actual {
+            VirtualDisplayManager.shared.create()
+        } else {
+            VirtualDisplayManager.shared.destroy()
+        }
         Task {
             try? await KeepAwakeManager.shared.applyScreenLockOverride(actual)
         }
