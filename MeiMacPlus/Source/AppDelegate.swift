@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var targetApp: NSRunningApplication?
     private var trustWatchdog: Timer?
     private var lastKnownTrusted: Bool?
+    private var screenLockHealTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard ensureSingleInstance() else {
@@ -59,6 +60,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RunLoop.main.add(watchdog, forMode: .common)
         trustWatchdog = watchdog
         sessionLog.notice("trust watchdog armed")
+
+        // Self-heal: macOS 26.2's lock-password write path is broken at the
+        // OS level (root, admin GUI, profiles — everything). While the toggle
+        // is on and the channel is latched broken, periodically retry the
+        // FREE root path only (never prompts) so the feature activates by
+        // itself the moment Apple ships a fix.
+        let healer = Timer(timeInterval: 6 * 3600, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.healScreenLockChannelIfNeeded()
+            }
+        }
+        RunLoop.main.add(healer, forMode: .common)
+        screenLockHealTimer = healer
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+            MainActor.assumeIsolated { self?.healScreenLockChannelIfNeeded() }
+        }
+    }
+
+    private func healScreenLockChannelIfNeeded() {
+        guard settings.keepAwakeOnLidClose else { return }
+        Task {
+            if await KeepAwakeManager.shared.retryBrokenScreenLockChannel() {
+                notifyScreenLockHealed()
+            }
+        }
+    }
+
+    private func notifyScreenLockHealed() {
+        let notification = NSUserNotification()
+        notification.title = L("keepawake.healed.title")
+        notification.informativeText = L("keepawake.healed.body")
+        NSUserNotificationCenter.default.deliver(notification)
     }
 
     private func trustDidChange() {

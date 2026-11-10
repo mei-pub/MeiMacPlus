@@ -273,6 +273,22 @@ final class KeepAwakeManager {
         }
     }
 
+    /// Retries ONLY the free root path for a previously latched-broken
+    /// channel (never prompts). Used by the periodic self-heal timer: when
+    /// Apple fixes the Tahoe write path, the toggle silently starts working
+    /// again. Returns true on recovery (broken flag cleared, lock now off).
+    nonisolated func retryBrokenScreenLockChannel() async -> Bool {
+        guard Self.screenLockChannelBroken,
+              UserDefaults.standard.string(forKey: Self.savedScreenLockKey) != nil
+        else { return false }
+        if let (ok, _) = await helperSetScreenLock("off"), ok {
+            Self.screenLockChannelBroken = false
+            sessionLog.notice("screen-lock channel healed — wake-password suppression active")
+            return true
+        }
+        return false
+    }
+
     private enum ScreenLockWriteOutcome {
         case success
         case userCancelled
