@@ -10,6 +10,11 @@ import IOKit.pwr_mgt
     func setDisablesSleep(_ value: Bool, reply: @escaping (Bool, Bool, String?) -> Void)
     /// reply: (success, current value)
     func readDisablesSleep(reply: @escaping (Bool, Bool) -> Void)
+    /// reply: raw `sysadminctl -screenLock status` output
+    func getScreenLock(reply: @escaping (String) -> Void)
+    /// mode: "off" | "immediate" | "<seconds>". Root tries the write and
+    /// verifies by reading back. reply: (verified, tool output)
+    func setScreenLock(_ mode: String, reply: @escaping (Bool, String?) -> Void)
 }
 
 /// Drives the "keep awake with the lid closed" toggle.
@@ -30,6 +35,12 @@ final class KeepAwakeManager {
         case helperMissing
         case installFailed(String)
         case commandFailed(String)
+        /// The lock requirement could not be changed: macOS 26.2's
+        /// screen-lock write path (MobileKeyBag) is broken for GUI,
+        /// root, and admin-authenticated sysadminctl alike. pmset and the
+        /// display assertion are unaffected — callers keep the toggle on
+        /// and surface this once.
+        case screenLockChannelBroken(String)
     }
 
     static let shared = KeepAwakeManager()
@@ -40,7 +51,7 @@ final class KeepAwakeManager {
     /// Must mirror `helperVersion` in MeiMacPlusHelper/Source/main.swift.
     /// A mismatch triggers an in-place upgrade (one admin prompt) on the
     /// next toggle.
-    nonisolated static let expectedHelperVersion = "1.1.2"
+    nonisolated static let expectedHelperVersion = "1.2.1"
 
     // MARK: - Reading system state (unprivileged)
 
@@ -155,6 +166,157 @@ final class KeepAwakeManager {
         }
     }
 
+    // MARK: - Lock screen override (open-lid "no password")
+
+    /// With the lid closed and the system awake, reopening still asks for a
+    /// password: that requirement is the screen-lock setting (macOS 13+
+    /// stores it in the Keychain, controlled by
+    /// `sysadminctl -screenLock <off|immediate|seconds>`), NOT the legacy
+    /// com.apple.screensaver defaults keys. While keep-awake is on we set it
+    /// to `off` and restore the previous value when the toggle goes off.
+    ///
+    /// These methods are deliberately `nonisolated`: applicationWillTerminate
+    /// must be able to restore the lock setting synchronously (bounded wait)
+    /// from a detached task without hopping to the main actor.
+    enum ScreenLockState: Equatable {
+        case off
+        case immediate
+        case delay(seconds: Int)
+        case unknown
+
+        /// The argument string sysadminctl accepts for this state.
+        var modeArgument: String {
+            switch self {
+            case .off: return "off"
+            case .immediate: return "immediate"
+            case .delay(let s): return String(s)
+            case .unknown: return "immediate" // safe default on restore
+            }
+        }
+    }
+
+    /// Parses `sysadminctl -screenLock status` output, e.g.
+    /// "2026-11-10 08:07:09.543 sysadminctl[123]: screenLock delay is immediate".
+    /// Pure function, unit-tested.
+    nonisolated static func parseScreenLock(_ statusText: String) -> ScreenLockState {
+        let text = statusText.lowercased()
+        guard text.contains("screenlock") else { return .unknown }
+        if text.contains("off") { return .off }
+        if text.contains("immediate") { return .immediate }
+        if let range = text.range(of: #"(\d+)\s*seconds"#, options: .regularExpression),
+           let seconds = Int(text[range].split(separator: " ").first ?? "") {
+            return .delay(seconds: seconds)
+        }
+        return .unknown
+    }
+
+    private static let savedScreenLockKey = "keepAwakePrevScreenLock"
+    private static let screenLockBrokenKey = "keepAwakeScreenLockChannelBroken"
+
+    /// True once we've proven this macOS refuses every screen-lock write
+    /// path (root AND admin-authenticated sysadminctl both fail on 26.2 —
+    /// even System Settings can't change it). Skips further attempts so the
+    /// user isn't prompted for a password that can't work.
+    nonisolated static var screenLockChannelBroken: Bool {
+        get { UserDefaults.standard.bool(forKey: screenLockBrokenKey) }
+        set { UserDefaults.standard.set(newValue, forKey: screenLockBrokenKey) }
+    }
+
+    /// Reads the saved pre-override screen-lock mode (survives crashes).
+    nonisolated private static func savedScreenLockMode() -> String? {
+        UserDefaults.standard.string(forKey: savedScreenLockKey)
+    }
+
+    /// While keep-awake is on, turns the lock requirement off; when it goes
+    /// off, restores the value captured at enable time. The captured value
+    /// persists in UserDefaults so an abnormal exit can be recovered at the
+    /// next launch.
+    ///
+    /// Two write paths are tried, each verified by reading the status back
+    /// (sysadminctl lies with exit code 0 on failure):
+    /// 1. root helper — free when a future macOS accepts it;
+    /// 2. osascript with administrator privileges — the password lives only
+    ///    in the authorization dialog.
+    /// On macOS 26.2 both paths fail (MKBDeviceSetGracePeriod error -14;
+    /// even System Settings can't write the keybag), in which case
+    /// screenLockChannelBroken is latched and the screenLockChannelBroken
+    /// error is thrown.
+    nonisolated func applyScreenLockOverride(_ on: Bool) async throws {
+        if on {
+            if Self.savedScreenLockMode() == nil {
+                let status = await helperScreenLockStatus() ?? ""
+                let state = Self.parseScreenLock(status)
+                UserDefaults.standard.set(state.modeArgument, forKey: Self.savedScreenLockKey)
+            }
+            // Already off? Nothing to do.
+            let before = await helperScreenLockStatus() ?? ""
+            guard Self.parseScreenLock(before) != .off else { return }
+            switch await Self.trySetScreenLock("off") {
+            case .success: return
+            case .userCancelled: throw KeepAwakeError.cancelled
+            case .failed: throw KeepAwakeError.screenLockChannelBroken(before)
+            }
+        } else if let saved = Self.savedScreenLockMode() {
+            // Already back at the saved value? Just drop the record.
+            if Self.parseScreenLock(await helperScreenLockStatus() ?? "").modeArgument == saved {
+                UserDefaults.standard.removeObject(forKey: Self.savedScreenLockKey)
+                return
+            }
+            switch await Self.trySetScreenLock(saved) {
+            case .success:
+                UserDefaults.standard.removeObject(forKey: Self.savedScreenLockKey)
+            case .userCancelled:
+                throw KeepAwakeError.cancelled
+            case .failed:
+                throw KeepAwakeError.screenLockChannelBroken(saved)
+            }
+        }
+    }
+
+    private enum ScreenLockWriteOutcome {
+        case success
+        case userCancelled
+        case failed
+    }
+
+    /// Tries both write paths with verification. Latches the broken flag
+    /// when both fail so later toggles skip straight to the error.
+    nonisolated private static func trySetScreenLock(_ mode: String) async -> ScreenLockWriteOutcome {
+        if Self.screenLockChannelBroken { return .failed }
+        // Path 1: root helper.
+        if let (ok, _) = await shared.helperSetScreenLock(mode), ok { return .success }
+        // Path 2: osascript admin. The password never leaves the dialog.
+        let (succeeded, stderr) = await shared.runOSAScript(
+            "do shell script \"/usr/sbin/sysadminctl -screenLock \(mode)\" with administrator privileges"
+        )
+        if succeeded {
+            // osascript exit 0 is not proof (sysadminctl lies); verify.
+            let after = await shared.helperScreenLockStatus() ?? ""
+            if Self.parseScreenLock(after).modeArgument == mode {
+                return .success
+            }
+        } else if stderr.lowercased().contains("cancel") {
+            // User dismissed the password prompt — not a broken channel.
+            return .userCancelled
+        }
+        Self.screenLockChannelBroken = true
+        return .failed
+    }
+
+    private nonisolated func helperScreenLockStatus() async -> String? {
+        await callHelper { proxy, done in
+            proxy.getScreenLock { done($0) }
+        }
+    }
+
+    private nonisolated func helperSetScreenLock(_ mode: String) async -> (Bool, String?)? {
+        await callHelper { proxy, done in
+            proxy.setScreenLock(mode) { ok, detail in
+                done((ok, detail))
+            }
+        }
+    }
+
     // MARK: - Helper installation
 
     /// Runs the bundled helper's `--install` through osascript with
@@ -194,7 +356,7 @@ final class KeepAwakeManager {
         throw KeepAwakeError.installFailed("helper installed but not responding")
     }
 
-    private func runOSAScript(_ source: String) async -> (succeeded: Bool, stderr: String) {
+    nonisolated private func runOSAScript(_ source: String) async -> (succeeded: Bool, stderr: String) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 let process = Process()
@@ -239,8 +401,9 @@ final class KeepAwakeManager {
 
     /// Runs one helper RPC with a timeout. Returns nil when the helper can't
     /// be reached (not installed, dead, or too slow) — callers treat that as
-    /// "needs install".
-    private func callHelper<T>(_ invoke: @escaping (MeiHelperProtocol, @escaping (T) -> Void) -> Void) async -> T? {
+    /// "needs install". nonisolated so lock-screen restore can run from a
+    /// detached task during application termination.
+    nonisolated private func callHelper<T>(_ invoke: @escaping (MeiHelperProtocol, @escaping (T) -> Void) -> Void) async -> T? {
         await withCheckedContinuation { continuation in
             let connection = NSXPCConnection(machServiceName: machServiceName, options: .privileged)
             connection.remoteObjectInterface = NSXPCInterface(with: MeiHelperProtocol.self)

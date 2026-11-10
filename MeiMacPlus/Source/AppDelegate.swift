@@ -78,6 +78,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         endSession(cancel: true)
         // Process-scoped anyway; release explicitly for tidiness.
         KeepAwakeManager.shared.setDisplaySleepAssertion(false)
+        // The lock-screen override MUST not outlive the app. The restore is
+        // async XPC; wait for it (bounded) — applyScreenLockOverride and the
+        // helper RPCs are nonisolated, so a detached task can't deadlock on
+        // the main actor we're currently on.
+        let semaphore = DispatchSemaphore(value: 0)
+        Task.detached(priority: .userInitiated) {
+            try? await KeepAwakeManager.shared.applyScreenLockOverride(false)
+            semaphore.signal()
+        }
+        _ = semaphore.wait(timeout: .now() + 5)
     }
 
     // MARK: - Single instance
@@ -170,12 +180,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await KeepAwakeManager.shared.apply(desired)
-                // pmset layer confirmed; now hold the display-sleep
-                // assertion so an open lid never blanks the screen.
+                // pmset layer confirmed; now the display-sleep assertion
+                // (open lid stays lit) and the lock-screen override (open
+                // lid needs no password).
                 KeepAwakeManager.shared.setDisplaySleepAssertion(desired)
+                try await KeepAwakeManager.shared.applyScreenLockOverride(desired)
             } catch KeepAwakeManager.KeepAwakeError.cancelled {
                 sessionLog.notice("keep-awake change cancelled by user")
                 revertKeepAwake()
+            } catch let error as KeepAwakeManager.KeepAwakeError {
+                if case .screenLockChannelBroken = error {
+                    // pmset + assertion already succeeded — keep the toggle
+                    // on and explain the limitation once.
+                    sessionLog.error("screen-lock channel broken: \(String(describing: error), privacy: .public)")
+                    alertKeepAwakeFailure(error)
+                } else {
+                    sessionLog.error("keep-awake change failed: \(String(describing: error), privacy: .public)")
+                    alertKeepAwakeFailure(error)
+                    revertKeepAwake()
+                }
             } catch {
                 sessionLog.error("keep-awake change failed: \(String(describing: error), privacy: .public)")
                 alertKeepAwakeFailure(error)
@@ -202,6 +225,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // The display-sleep assertion is process-scoped and must be
             // re-created on every launch, whatever the stored value says.
             KeepAwakeManager.shared.setDisplaySleepAssertion(actual)
+            // Lock-screen override follows; also recovers a saved pre-override
+            // value if the app died while it was active.
+            Task {
+                try? await KeepAwakeManager.shared.applyScreenLockOverride(actual)
+            }
             menuBar.refresh()
         }
     }
@@ -211,7 +239,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyingKeepAwake = true
         settings.keepAwakeOnLidClose.toggle()
         applyingKeepAwake = false
-        KeepAwakeManager.shared.setDisplaySleepAssertion(settings.keepAwakeOnLidClose)
+        let actual = settings.keepAwakeOnLidClose
+        KeepAwakeManager.shared.setDisplaySleepAssertion(actual)
+        Task {
+            try? await KeepAwakeManager.shared.applyScreenLockOverride(actual)
+        }
         menuBar.refresh()
     }
 

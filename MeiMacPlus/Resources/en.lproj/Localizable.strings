@@ -52,9 +52,9 @@
 /* Keep awake */
 "settings.section.keepAwake" = "Keep Awake";
 "settings.keepAwake" = "Keep the screen on; closing the lid only blanks the display (no sleep, no network loss)";
-"settings.keepAwake.footer" = "While on: an open lid never blanks the screen — no idle blackout, no wake-up needed. Closing the lid only turns the display off: the system stays awake, network and apps keep running, and reopening the lid resumes instantly with no lock screen. Screen-on is maintained while MeiMacPlus runs; the lid-close behavior is a system setting that persists across restarts and app quits. First enable asks once for an administrator password to install a background helper; turning the switch off restores all system defaults. Note: the Mac won't sleep automatically or manually while enabled — mind heat on battery, and other keep-awake tools (e.g. Awayke) will fight over the same setting.";
-"keepawake.error.title" = "Could not change the keep-awake setting";
-"keepawake.error.body" = "An error occurred: %@\nThe switch was put back to the current system state.";
+"settings.keepAwake.footer" = "While on: an open lid never blanks the screen, and closing the lid only turns the display off — the system stays awake, network and apps keep running, and reopening the lid resumes instantly. Note: macOS 26.2 has a system-level fault in its lock-password write path (neither System Settings nor the CLI can change it), so reopening the lid still asks for a password; this resolves automatically once macOS fixes it, and MeiMacPlus keeps retrying so it kicks in when possible. An administrator password is asked once for the first enable and for some toggles (helper install). The Mac won't sleep automatically or manually while enabled — mind heat on battery; other keep-awake tools (e.g. Awayke) will fight over the same setting.";
+"keepawake.error.title" = "Could not change a keep-awake setting";
+"keepawake.error.body" = "An error occurred: %@";
 
 /* About */
 "about.version" = "Version %@ (Build %@)";

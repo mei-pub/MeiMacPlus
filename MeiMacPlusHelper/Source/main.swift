@@ -32,7 +32,7 @@ let expectedClientIdentifier = "com.meimacplus.MeiMacPlus"
 
 /// Bump to force a reinstall when the app notices a stale helper.
 /// (Must mirror KeepAwakeManager.expectedHelperVersion in the app target.)
-let helperVersion = "1.1.2"
+let helperVersion = "1.2.1"
 
 // MARK: - XPC protocol (mirrored in the app target's KeepAwakeManager.swift)
 
@@ -43,6 +43,16 @@ let helperVersion = "1.1.2"
     func setDisablesSleep(_ value: Bool, reply: @escaping (Bool, Bool, String?) -> Void)
     /// Reads `pmset -g`. reply: (success, current value).
     func readDisablesSleep(reply: @escaping (Bool, Bool) -> Void)
+    /// Runs `sysadminctl -screenLock status` (reading needs no privileges).
+    /// reply: full tool output (the App parses the delay from it).
+    /// NOTE: CHANGING the lock setting requires an admin password even for
+    /// root — the App does that via osascript. This method exists so the App
+    /// can ask root to try first (free when it works) and to read back and
+    /// verify every attempt.
+    func getScreenLock(reply: @escaping (String) -> Void)
+    /// Runs `sysadminctl -screenLock <mode>` as root, then verifies by
+    /// reading the status back. reply: (verified-ok, tool output).
+    func setScreenLock(_ mode: String, reply: @escaping (Bool, String?) -> Void)
 }
 
 // MARK: - pmset plumbing
@@ -79,24 +89,33 @@ enum PMSetOutcome {
     case failed(String)
 }
 
+/// Runs a system tool, capturing stdout+stderr. Used for pmset and
+/// sysadminctl (whose results are printed on stderr with a timestamp prefix).
+func runTool(_ path: String, _ arguments: [String]) -> PMSetOutcome {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: path)
+    process.arguments = arguments
+    let outPipe = Pipe()
+    let errPipe = Pipe()
+    process.standardOutput = outPipe
+    process.standardError = errPipe
+    do {
+        try process.run()
+    } catch {
+        return .failed("\(path) failed to launch: \(error)")
+    }
+    let out = outPipe.fileHandleForReading.readDataToEndOfFile()
+    let err = errPipe.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    let text = (String(data: out, encoding: .utf8) ?? "") + (String(data: err, encoding: .utf8) ?? "")
+    return .ok(code: process.terminationStatus, output: text)
+}
+
 func runPMSet(_ arguments: [String]) -> PMSetOutcome {
     guard let pmset = pmsetPath() else {
         return .failed("pmset not found at /usr/bin/pmset or /usr/sbin/pmset")
     }
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: pmset)
-    process.arguments = arguments
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = Pipe()
-    do {
-        try process.run()
-    } catch {
-        return .failed("pmset failed to launch: \(error)")
-    }
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    process.waitUntilExit()
-    return .ok(code: process.terminationStatus, output: String(data: data, encoding: .utf8) ?? "")
+    return runTool(pmset, arguments)
 }
 
 // MARK: - XPC service
@@ -136,6 +155,39 @@ final class HelperService: NSObject, MeiHelperProtocol {
             return
         }
         reply(true, parsed)
+    }
+
+    func getScreenLock(reply: @escaping (String) -> Void) {
+        let result = runTool("/usr/sbin/sysadminctl", ["-screenLock", "status"])
+        // sysadminctl prints its result on stderr with a timestamp prefix;
+        // hand back both streams and let the App parse.
+        if case .ok(_, let output) = result {
+            reply(output)
+        } else if case .failed(let failure) = result {
+            reply(failure)
+        }
+    }
+
+    func setScreenLock(_ mode: String, reply: @escaping (Bool, String?) -> Void) {
+        // mode: "off", "immediate", or a seconds string. Root does not
+        // exempt us from sysadminctl's -password requirement (macOS 26.2
+        // refuses even root with "Password is required!") — but we try
+        // anyway so a future macOS that accepts root works for free. The
+        // read-back below is the actual verdict.
+        _ = runTool("/usr/sbin/sysadminctl", ["-screenLock", mode])
+        let check = runTool("/usr/sbin/sysadminctl", ["-screenLock", "status"])
+        guard case .ok(_, let status) = check else {
+            reply(false, "could not read back screenLock state")
+            return
+        }
+        let text = status.lowercased()
+        let confirmed: Bool
+        switch mode {
+        case "off": confirmed = text.contains("off")
+        case "immediate": confirmed = text.contains("immediate")
+        default: confirmed = text.contains("\(mode) second")
+        }
+        reply(confirmed, status.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }
 
