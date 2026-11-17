@@ -61,3 +61,42 @@
 /* About */
 "about.version" = "版本 %@ (构建 %@)";
 "about.credits" = "灵感来自 SlowQuitApps (dteoh)，使用 Swift 独立实现。";
+
+/* 鼠标滚动增强 */
+"menubar.scroll" = "鼠标平滑滚动";
+"menubar.scrollMonitor" = "滚动监视器…";
+"settings.section.scroll" = "鼠标滚动";
+"settings.scroll.enable" = "增强鼠标滚轮滚动";
+"settings.scroll.smooth" = "平滑滚动（插值滚轮步进）";
+"settings.scroll.duration.value" = "%d 毫秒";
+"settings.scroll.gain.value" = "×%.1f";
+"settings.scroll.reverseVertical" = "反转垂直方向（仅滚轮鼠标）";
+"settings.scroll.reverseHorizontal" = "反转水平方向（仅滚轮鼠标）";
+"settings.scroll.blacklist.empty" = "所有应用都启用滚动增强";
+"settings.scroll.blacklist.addRunning" = "排除运行中的应用";
+"settings.scroll.blacklist.pick" = "选择应用…";
+"settings.scroll.blacklist.manualPlaceholder" = "Bundle ID，如 com.apple.Terminal";
+"settings.scroll.blacklist.add" = "排除";
+"settings.scroll.openMonitor" = "打开滚动监视器…";
+"settings.scroll.footer" = "触控板与妙控鼠标不受影响。时长决定惯性滑行多久（越大越“飘”）；增益决定每格滚动距离的倍数。列表中的应用保持原生滚动。若同时运行其他平滑滚动工具（Mos、Smooze 等），请只开启一个。";
+"scrollmonitor.title" = "滚动监视器";
+"scrollmonitor.hint" = "实时查看滚轮事件与引擎决策";
+"scrollmonitor.clear" = "清空";
+"scrollmonitor.col.time" = "t (秒)";
+"scrollmonitor.col.source" = "来源";
+"scrollmonitor.col.delta" = "Δ";
+"scrollmonitor.col.decision" = "决策";
+"scrollmonitor.col.app" = "前台应用";
+"scrollmonitor.decision.smooth" = "平滑";
+"scrollmonitor.decision.reverse" = "反转";
+"scrollmonitor.decision.emit" = "发出";
+"scrollmonitor.decision.pass" = "放行";
+"scroll.conflict.title" = "检测到其他滚动增强工具";
+"scroll.conflict.body" = "%@ 也在接管鼠标滚动。请只保留一个开启，否则滚轮手感会互相干扰。";
+
+/* 设置侧栏 (1.4) */
+"settings.sidebar.features" = "功能";
+"settings.enable.footer" = "开启后，按住 ⌘Q 达到设定时长，最前面的应用才会退出。";
+"settings.launchAtLogin.footer" = "MeiMacPlus 将常驻菜单栏运行，各项能力持续生效。";
+"settings.scroll.section.behavior" = "行为";
+"settings.scroll.section.blacklist" = "排除的应用";

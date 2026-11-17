@@ -15,6 +15,7 @@ final class AppSettings: ObservableObject {
         case whitelist
         case invertList
         case keepAwake
+        case scroll
     }
 
     static let shared = AppSettings()
@@ -29,6 +30,13 @@ final class AppSettings: ObservableObject {
             DefaultsKeys.invertList: false,
             DefaultsKeys.whitelist: [String](),
             DefaultsKeys.keepAwakeOnLidClose: false,
+            DefaultsKeys.scrollEnabled: false,
+            DefaultsKeys.scrollSmoothEnabled: true,
+            DefaultsKeys.scrollDurationMS: 300,
+            DefaultsKeys.scrollGain: 1.0,
+            DefaultsKeys.scrollReverseVertical: false,
+            DefaultsKeys.scrollReverseHorizontal: false,
+            DefaultsKeys.scrollBlacklist: [String](),
         ])
         enabled = defaults.bool(forKey: DefaultsKeys.enabled)
         delayMilliseconds = defaults.integer(forKey: DefaultsKeys.delay)
@@ -36,6 +44,13 @@ final class AppSettings: ObservableObject {
         invertList = defaults.bool(forKey: DefaultsKeys.invertList)
         whitelist = defaults.stringArray(forKey: DefaultsKeys.whitelist) ?? []
         keepAwakeOnLidClose = defaults.bool(forKey: DefaultsKeys.keepAwakeOnLidClose)
+        scrollEnabled = defaults.bool(forKey: DefaultsKeys.scrollEnabled)
+        scrollSmoothEnabled = defaults.bool(forKey: DefaultsKeys.scrollSmoothEnabled)
+        scrollDurationMS = defaults.integer(forKey: DefaultsKeys.scrollDurationMS)
+        scrollGain = defaults.object(forKey: DefaultsKeys.scrollGain) as? Double ?? 1.0
+        scrollReverseVertical = defaults.bool(forKey: DefaultsKeys.scrollReverseVertical)
+        scrollReverseHorizontal = defaults.bool(forKey: DefaultsKeys.scrollReverseHorizontal)
+        scrollBlacklist = defaults.stringArray(forKey: DefaultsKeys.scrollBlacklist) ?? []
     }
 
     /// Called on the main thread after any setting changes.
@@ -74,10 +89,63 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(keepAwakeOnLidClose, forKey: DefaultsKeys.keepAwakeOnLidClose); onChange?(.keepAwake) }
     }
 
+    // MARK: - Mouse scroll enhancement
+
+    /// Master switch for the scroll engine (tap install/uninstall).
+    @Published var scrollEnabled: Bool {
+        didSet { defaults.set(scrollEnabled, forKey: DefaultsKeys.scrollEnabled); onChange?(.scroll) }
+    }
+
+    /// Interpolate wheel events into continuous motion. When off, only the
+    /// direction-reversal switches still act.
+    @Published var scrollSmoothEnabled: Bool {
+        didSet { defaults.set(scrollSmoothEnabled, forKey: DefaultsKeys.scrollSmoothEnabled); onChange?(.scroll) }
+    }
+
+    /// Easing duration in milliseconds. Clamped.
+    @Published var scrollDurationMS: Int {
+        didSet {
+            let clamped = min(max(scrollDurationMS, Self.minScrollDurationMS), Self.maxScrollDurationMS)
+            if clamped != scrollDurationMS { scrollDurationMS = clamped; return }
+            defaults.set(scrollDurationMS, forKey: DefaultsKeys.scrollDurationMS)
+            onChange?(.scroll)
+        }
+    }
+
+    /// Distance multiplier per wheel pulse. Clamped.
+    @Published var scrollGain: Double {
+        didSet {
+            let clamped = min(max(scrollGain, Self.minScrollGain), Self.maxScrollGain)
+            if clamped != scrollGain { scrollGain = clamped; return }
+            defaults.set(scrollGain, forKey: DefaultsKeys.scrollGain)
+            onChange?(.scroll)
+        }
+    }
+
+    /// Flip the vertical scroll direction of wheel mice only (trackpads and
+    /// Magic Mouse are untouched).
+    @Published var scrollReverseVertical: Bool {
+        didSet { defaults.set(scrollReverseVertical, forKey: DefaultsKeys.scrollReverseVertical); onChange?(.scroll) }
+    }
+
+    @Published var scrollReverseHorizontal: Bool {
+        didSet { defaults.set(scrollReverseHorizontal, forKey: DefaultsKeys.scrollReverseHorizontal); onChange?(.scroll) }
+    }
+
+    /// Bundle IDs that never get enhanced scrolling.
+    @Published var scrollBlacklist: [String] {
+        didSet { defaults.set(scrollBlacklist, forKey: DefaultsKeys.scrollBlacklist); onChange?(.scroll) }
+    }
+
     var delaySeconds: TimeInterval { TimeInterval(delayMilliseconds) / 1000 }
 
     static let minDelayMs = 200
     static let maxDelayMs = 5000
+
+    static let minScrollDurationMS = 100
+    static let maxScrollDurationMS = 1000
+    static let minScrollGain = 0.5
+    static let maxScrollGain = 3.0
 
     private let defaults: UserDefaults
     private enum DefaultsKeys {
@@ -87,5 +155,12 @@ final class AppSettings: ObservableObject {
         static let invertList = "invertList"
         static let whitelist = "whitelist"
         static let keepAwakeOnLidClose = "keepAwakeOnLidClose"
+        static let scrollEnabled = "scrollEnabled"
+        static let scrollSmoothEnabled = "scrollSmoothEnabled"
+        static let scrollDurationMS = "scrollDurationMS"
+        static let scrollGain = "scrollGain"
+        static let scrollReverseVertical = "scrollReverseVertical"
+        static let scrollReverseHorizontal = "scrollReverseHorizontal"
+        static let scrollBlacklist = "scrollBlacklist"
     }
 }

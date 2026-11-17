@@ -15,6 +15,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     var onOpenSettings: (() -> Void)?
     var onToggleLoginItem: (() -> Void)?
     var onToggleKeepAwake: (() -> Void)?
+    var onToggleScroll: (() -> Void)?
+    var onOpenScrollMonitor: (() -> Void)?
     var onOpenAbout: (() -> Void)?
     var onQuit: (() -> Void)?
 
@@ -125,6 +127,23 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         keepAwakeItem.state = settings.keepAwakeOnLidClose ? .on : .off
         menu.addItem(keepAwakeItem)
 
+        let scrollItem = NSMenuItem(
+            title: L("menubar.scroll"),
+            action: #selector(toggleScroll(_:)), keyEquivalent: ""
+        )
+        scrollItem.target = self
+        scrollItem.state = settings.scrollEnabled && trusted ? .on : .off
+        scrollItem.isEnabled = trusted
+        menu.addItem(scrollItem)
+
+        let scrollMonitorItem = NSMenuItem(
+            title: L("menubar.scrollMonitor"),
+            action: #selector(openScrollMonitor(_:)), keyEquivalent: ""
+        )
+        scrollMonitorItem.target = self
+        scrollMonitorItem.isEnabled = settings.scrollEnabled
+        menu.addItem(scrollMonitorItem)
+
         if !trusted {
             let permissionItem = NSMenuItem(
                 title: L("menubar.grantPermission"),
@@ -178,6 +197,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     @objc private func toggleKeepAwake(_ sender: Any?) {
         onToggleKeepAwake?()
+    }
+
+    @objc private func toggleScroll(_ sender: Any?) {
+        onToggleScroll?()
+    }
+
+    @objc private func openScrollMonitor(_ sender: Any?) {
+        onOpenScrollMonitor?()
     }
 
     @objc private func grantPermission(_ sender: Any?) {

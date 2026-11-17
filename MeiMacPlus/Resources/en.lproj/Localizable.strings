@@ -61,3 +61,42 @@
 /* About */
 "about.version" = "Version %@ (Build %@)";
 "about.credits" = "Inspired by SlowQuitApps (dteoh). Implemented in Swift.";
+
+/* Mouse scroll */
+"menubar.scroll" = "Smooth Mouse Scrolling";
+"menubar.scrollMonitor" = "Scroll Monitor…";
+"settings.section.scroll" = "Mouse Scrolling";
+"settings.scroll.enable" = "Enhance mouse wheel scrolling";
+"settings.scroll.smooth" = "Smooth scrolling (interpolate wheel steps)";
+"settings.scroll.duration.value" = "%d ms";
+"settings.scroll.gain.value" = "×%.1f";
+"settings.scroll.reverseVertical" = "Reverse vertical direction (wheel mice only)";
+"settings.scroll.reverseHorizontal" = "Reverse horizontal direction (wheel mice only)";
+"settings.scroll.blacklist.empty" = "All apps get enhanced scrolling";
+"settings.scroll.blacklist.addRunning" = "Exclude a running app";
+"settings.scroll.blacklist.pick" = "Choose an app…";
+"settings.scroll.blacklist.manualPlaceholder" = "Bundle ID, e.g. com.apple.Terminal";
+"settings.scroll.blacklist.add" = "Exclude";
+"settings.scroll.openMonitor" = "Open Scroll Monitor…";
+"settings.scroll.footer" = "Trackpads and Magic Mouse are never touched. The duration controls how long the glide lasts (higher = floatier); the gain multiplies the distance per wheel step. Listed apps keep their native scrolling. If another smoothing tool (Mos, Smooze…) is running, enable only one of them.";
+"scrollmonitor.title" = "Scroll Monitor";
+"scrollmonitor.hint" = "Live view of wheel events and the engine's decisions";
+"scrollmonitor.clear" = "Clear";
+"scrollmonitor.col.time" = "t (s)";
+"scrollmonitor.col.source" = "Src";
+"scrollmonitor.col.delta" = "Δ";
+"scrollmonitor.col.decision" = "Decision";
+"scrollmonitor.col.app" = "Frontmost App";
+"scrollmonitor.decision.smooth" = "smooth";
+"scrollmonitor.decision.reverse" = "reverse";
+"scrollmonitor.decision.emit" = "emit";
+"scrollmonitor.decision.pass" = "pass";
+"scroll.conflict.title" = "Another scrolling tool is running";
+"scroll.conflict.body" = "%@ is also handling mouse scrolling. Keep only one active, or the wheel will feel wrong in both.";
+
+/* Settings sidebar (1.4) */
+"settings.sidebar.features" = "Features";
+"settings.enable.footer" = "When enabled, ⌘Q must be held for the configured duration before the frontmost app quits.";
+"settings.launchAtLogin.footer" = "MeiMacPlus keeps running in the menu bar so both protections stay active.";
+"settings.scroll.section.behavior" = "Behavior";
+"settings.scroll.section.blacklist" = "Excluded Apps";

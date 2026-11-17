@@ -10,9 +10,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let interceptor = CmdQInterceptor()
     private let overlay = OverlayWindowController()
     private let menuBar = MenuBarController()
+    let scrollEngine = ScrollEngine()
 
     private var permissionGuide: PermissionGuideWindowController?
     private var settingsWindow: SettingsWindowController?
+    private var scrollMonitorWindow: ScrollMonitorWindowController?
 
     /// Guards settings.keepAwakeOnLidClose assignments that must NOT kick
     /// off another helper round-trip (launch-time sync, revert-after-failure).
@@ -38,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.settingsDidChange(change)
         }
         syncKeepAwakeFromSystem()
+        applyScrollSettings()
 
         let trusted = CmdQInterceptor.isProcessTrusted()
         lastKnownTrusted = trusted
@@ -102,6 +105,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.refresh()
         if trusted {
             activateInterceptionIfDesired()
+            applyScrollSettings()
+        } else {
+            // Keep both taps consistent with trust; they cannot run without it.
+            scrollEngine.stop()
         }
     }
 
@@ -109,6 +116,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         trustWatchdog?.invalidate()
         interceptor.stop()
         endSession(cancel: true)
+        scrollEngine.stop()
         // Process-scoped anyway; release explicitly for tidiness.
         KeepAwakeManager.shared.setDisplaySleepAssertion(false)
         VirtualDisplayManager.shared.destroy()
@@ -168,6 +176,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onToggleKeepAwake = { [weak self] in
             self?.settings.keepAwakeOnLidClose.toggle()
         }
+        menuBar.onToggleScroll = { [weak self] in
+            self?.settings.scrollEnabled.toggle()
+        }
+        menuBar.onOpenScrollMonitor = { [weak self] in
+            self?.showScrollMonitor()
+        }
         menuBar.onOpenAbout = { [weak self] in
             self?.showAbout()
         }
@@ -184,6 +198,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             activateInterceptionIfDesired()
         case .keepAwake:
             applyKeepAwake()
+        case .scroll:
+            applyScrollSettings()
         default:
             break
         }
@@ -203,6 +219,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 sessionLog.error("failed to start interception")
             }
         }
+    }
+
+    // MARK: - Mouse scroll enhancement
+
+    /// Push the current settings to the engine and reconcile its lifetime
+    /// with the master switch and accessibility trust.
+    private func applyScrollSettings() {
+        let config = ScrollConfig.from(settings)
+        scrollEngine.updateConfig(config)
+        guard config.enabled, CmdQInterceptor.isProcessTrusted() else {
+            scrollEngine.stop()
+            return
+        }
+        if !scrollEngine.start() {
+            sessionLog.error("failed to start scroll engine")
+        }
+        warnAboutConflictingScrollToolsOnce()
+    }
+
+    /// Other smoothing tools (Mos, Smooze, …) fight over the same events;
+    /// surface the conflict once instead of leaving the user with janky wheels.
+    private func warnAboutConflictingScrollToolsOnce() {
+        guard !UserDefaults.standard.bool(forKey: "scrollConflictNoticeShown") else { return }
+        let known = ["com.caldis.Mos", "com.smooze.Mac.Smooze", "is.qwerty.SmoothScroll"]
+        let running = NSWorkspace.shared.runningApplications
+            .compactMap(\.bundleIdentifier)
+            .filter { known.contains($0) }
+        guard !running.isEmpty else { return }
+        UserDefaults.standard.set(true, forKey: "scrollConflictNoticeShown")
+        sessionLog.error("conflicting scroll tools running: \(running.joined(separator: ", "), privacy: .public)")
+        let alert = NSAlert()
+        alert.messageText = L("scroll.conflict.title")
+        alert.informativeText = L("scroll.conflict.body", running.joined(separator: ", "))
+        alert.alertStyle = .warning
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
     }
 
     // MARK: - Keep awake (lid closed)
@@ -318,6 +370,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow = SettingsWindowController()
         }
         settingsWindow?.present()
+    }
+
+    func showScrollMonitor() {
+        if scrollMonitorWindow == nil {
+            scrollMonitorWindow = ScrollMonitorWindowController(store: scrollEngine.monitor)
+        }
+        scrollMonitorWindow?.present()
     }
 
     func showPermissionGuide() {

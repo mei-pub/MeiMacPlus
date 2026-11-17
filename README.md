@@ -3,10 +3,11 @@
 [![Release](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml/badge.svg)](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/mei-pub/MeiMacPlus)](https://github.com/mei-pub/MeiMacPlus/releases)
 
-**Mac 增强工具集：按住 ⌘Q 防误退 + 合盖不息屏。** macOS 菜单栏常驻。
+**Mac 增强工具集：按住 ⌘Q 防误退 + 合盖不息屏 + 鼠标平滑滚动。** macOS 菜单栏常驻。
 
 ⌘Q 防误退的灵感来自开源项目 [SlowQuitApps](https://github.com/dteoh/SlowQuitApps)（GPL-2.0）的行为设计；
-本项目是**独立的 Swift 实现**（未复制其代码），采用 MIT 许可证发布。
+鼠标平滑滚动的灵感来自 [Mos](https://github.com/Caldis/Mos)（CC BY-NC 4.0）的功能设计。
+本项目是**独立的 Swift 实现**（未复制任何上述项目的代码），采用 MIT 许可证发布。
 
 ## 功能
 
@@ -36,9 +37,20 @@
 - ⚠️ 注意：开启期间系统不会自动或手动休眠（苹果菜单"睡眠"仅熄屏）；电池模式请留意散热；
   若同时运行其他防休眠工具（如 Awayke）会互相覆盖同一设置。
 
+### 鼠标滚动增强
+
+- **平滑滚动**：拦截滚轮鼠标的"一格一跳"事件，指数缓动插值成连续小步，
+  手感接近触控板的惯性滑行。时长（100–1000ms）与每格距离增益（×0.5–3.0）可调。
+- **独立反转方向**：垂直/水平分别设置，只对滚轮鼠标生效——
+  鼠标反转成"自然滚动"、触控板保持原样，一机两用不打架。
+- **应用黑名单**：游戏、终端等对滚动事件敏感的应用可排除，保持原生手感。
+- **滚动监视器**：实时查看滚轮事件、引擎决策与合成输出，调手感利器。
+- **触控板/妙控鼠标零干扰**：连续滚动事件直接放行，不做任何处理。
+- 与 Mos、Smooze 等同类工具同时运行会互相干扰，启动时自动提醒只开一个。
+
 ### 通用
 
-- **可视化设置窗口**：时长滑块、浮层开关、白名单管理。
+- **可视化设置窗口**：时长滑块、浮层开关、白名单管理、鼠标滚动调节。
 - **开机常驻**：基于 `SMAppService`（macOS 13+）的开机自动启动。
 - **辅助功能权限引导**：首次启动逐步引导授权，授权后自动继续。
 - **单实例**：重复启动会激活已运行实例。
