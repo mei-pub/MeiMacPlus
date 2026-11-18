@@ -4,6 +4,7 @@ import SwiftUI
 /// Script console: streaming log output from the Lua runtime plus a REPL
 /// input line — the Hammerspoon console role, in MeiMacPlus clothing.
 final class ScriptConsoleWindowController: NSWindowController, NSWindowDelegate {
+    private var escapeToken: WindowEscapeCloser.Token?
 
     private let refreshTimer: Timer
 
@@ -29,6 +30,7 @@ final class ScriptConsoleWindowController: NSWindowController, NSWindowDelegate 
         super.init(window: window)
         window.delegate = self
         RunLoop.main.add(timer, forMode: .common)
+        escapeToken = WindowEscapeCloser.attach(to: window)
     }
 
     required init?(coder: NSCoder) { nil }
@@ -40,6 +42,7 @@ final class ScriptConsoleWindowController: NSWindowController, NSWindowDelegate 
 
     func windowWillClose(_ notification: Notification) {
         refreshTimer.invalidate()
+        escapeToken?.invalidate()
     }
 }
 

@@ -492,7 +492,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             configs.append("{ \(parts.joined(separator: ", ")) }")
         }
-        LuaRuntime.shared.run(
+        let chunk =
+            // hs.spoons is loaded lazily; the spoon global and hs.loadSpoon
+            // only exist once it loads. Force it before anything else — at
+            // boot this chunk runs first, so neither exists yet.
+            "meiSpoonLoadState = 'STARTED' " +
+            "spoon = spoon or {} " +
+            "meiPanels = meiPanels or {} " +
+            "if not meiPanelMgr then " +
+            "meiPanelMgr = (function() " +
+            "local mgr = {} " +
+            "local esc = hs.hotkey.new({}, 'esc', function() " +
+            "for _, p in ipairs(meiPanels) do if p.canvas:isShowing() then p.canvas:hide() end end " +
+            "mgr.sync() end) " +
+            "local tap = hs.eventtap.new({hs.eventtap.event.types.leftMouseDown}, function(e) " +
+            "local pt = e:location() " +
+            "for _, p in ipairs(meiPanels) do " +
+            "if p.canvas:isShowing() then " +
+            "local f = p.canvas:frame() " +
+            "if f and not (pt.x >= f.x and pt.x <= f.x + f.w and pt.y >= f.y and pt.y <= f.y + f.h) then " +
+            "p.canvas:hide() mgr.sync() return true " +
+            "end " +
+            "end " +
+            "end " +
+            "return false end) " +
+            "function mgr.sync() " +
+            "local any = false " +
+            "for _, p in ipairs(meiPanels) do if p.canvas and p.canvas:isShowing() then any = true end end " +
+            "if any then esc:start() tap:start() else esc:stop() tap:stop() end " +
+            "end " +
+            "function mgr.register(c) table.insert(meiPanels, {canvas = c}) end " +
+            "return mgr " +
+            "end)() " +
+            "end " +
+            "if not hs.loadSpoon then require('hs.spoons') end " +
+            "local results = {} " +
             "local configs = { \(configs.joined(separator: ", ")) } " +
             "for _, cfg in ipairs(configs) do " +
             "for _, dep in ipairs(cfg.requires or {}) do " +
@@ -506,23 +540,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             "end " +
             "local ok, sp = pcall(hs.loadSpoon, cfg.name) " +
             "if ok and sp then " +
+            "if sp.canvas then meiPanelMgr.register(sp.canvas) end " +
             "local function activate() " +
             "if sp.toggle then sp:toggle() " +
             "elseif sp.toggleShow then sp:toggleShow() " +
             "elseif sp.show then sp:show() " +
             "elseif sp.run then sp:run() " +
             "else print('-- spoon ' .. cfg.name .. ' has no activatable method') end " +
+            "meiPanelMgr.sync() " +
             "end " +
             "if cfg.mappingKey ~= '' and sp.bindHotkeys and cfg.key ~= '' then " +
             "local okb, errb = pcall(sp.bindHotkeys, sp, { [cfg.mappingKey] = { cfg.mods, cfg.key } }) " +
             "if not okb then print('-- spoon ' .. cfg.name .. ' bindHotkeys failed: ' .. tostring(errb)) end " +
             "elseif cfg.key ~= '' then " +
-            "pcall(hs.hotkey.bind, cfg.mods, cfg.key, activate) " +
+            "local okb2, errb2 = pcall(hs.hotkey.bind, cfg.mods, cfg.key, activate) " +
+            "if not okb2 then print('-- spoon ' .. cfg.name .. ' hotkey bind failed: ' .. tostring(errb2)) end " +
             "end " +
             "if sp.start then pcall(sp.start, sp) end " +
-            "else print('-- spoon ' .. cfg.name .. ' failed to load') end " +
-            "end")
-        sessionLog.notice("loaded \(names.count) spoon(s)")
+            "table.insert(results, cfg.name .. '=' .. tostring(ok) .. ':' .. tostring(sp)) " +
+            "else print('-- spoon ' .. cfg.name .. ' failed to load: ' .. tostring(sp)) " +
+            "table.insert(results, cfg.name .. '=FAIL:' .. tostring(sp)) end " +
+            "end " +
+            "meiSpoonLoadState = table.concat(results, ' | ')"
+        // TEMP DIAG: dump the exact chunk for offline parse-check.
+        try? chunk.write(to: URL(fileURLWithPath: "/tmp/spoon-chunk.lua"), atomically: true, encoding: .utf8)
+        LuaRuntime.shared.run(chunk)
     }
 
     // MARK: - Keep awake (lid closed)

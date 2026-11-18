@@ -142,8 +142,10 @@ final class LuaRuntimeTests: XCTestCase {
             "end " +
             "local ok, sp = pcall(hs.loadSpoon, 'ClipShow'); " +
             "if not ok or not sp then return 'LOADFAIL' end " +
-            "return (type(sp.toggleShow) == 'function' and spoon.ModalMgr ~= nil) and 'OK' or 'MISSING'")
-        XCTAssertEqual(r2, "OK", "ClipShow with ModalMgr preload failed: \(r2 ?? "nil") logs: \(logs.suffix(6))")
+            "local okt, err = pcall(sp.toggleShow, sp) " +
+            "if not okt then return 'TOGGLEERR:' .. tostring(err) end " +
+            "return 'SHOWING=' .. tostring(sp.canvas:isShowing())")
+        XCTAssertEqual(r2, "SHOWING=true", "ClipShow toggleShow state: \(r2 ?? "nil") logs: \(logs.suffix(6))")
     }
 
     /// hs.chooser.new instantiates its window from the HSChooserWindow.nib

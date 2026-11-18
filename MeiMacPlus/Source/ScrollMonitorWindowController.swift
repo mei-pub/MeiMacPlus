@@ -5,6 +5,7 @@ import SwiftUI
 /// chosen action, and the synthetic emissions. A tuning aid for smoothing
 /// feel and blacklist coverage; opened from the menu or settings.
 final class ScrollMonitorWindowController: NSWindowController, NSWindowDelegate {
+    private var escapeToken: WindowEscapeCloser.Token?
 
     private let refreshTimer: Timer
 
@@ -30,6 +31,7 @@ final class ScrollMonitorWindowController: NSWindowController, NSWindowDelegate 
         super.init(window: window)
         window.delegate = self
         RunLoop.main.add(timer, forMode: .common)
+        escapeToken = WindowEscapeCloser.attach(to: window)
     }
 
     required init?(coder: NSCoder) { nil }
@@ -41,6 +43,7 @@ final class ScrollMonitorWindowController: NSWindowController, NSWindowDelegate 
 
     func windowWillClose(_ notification: Notification) {
         refreshTimer.invalidate()
+        escapeToken?.invalidate()
     }
 }
 
