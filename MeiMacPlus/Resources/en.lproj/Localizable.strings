@@ -144,3 +144,11 @@
 "settings.spoons.col.name" = "Spoon";
 "settings.spoons.col.usage" = "Usage";
 "settings.spoons.col.toggle" = "On";
+"settings.behavior.section" = "Behavior";
+"settings.behavior.dock" = "Show dock icon";
+"settings.behavior.menuIcon" = "Show menu bar icon";
+"settings.behavior.menuIcon.disabled" = "Enable the dock icon first, or you will not be able to reopen settings";
+"settings.behavior.consoleOnTop" = "Keep console window on top";
+"settings.behavior.ax.ok" = "Accessibility is enabled. You are all set!";
+"settings.behavior.ax.no" = "Accessibility is not granted";
+"settings.behavior.ax.grant" = "Grant...";
