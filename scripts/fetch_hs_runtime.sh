@@ -121,16 +121,18 @@ if ! grep -q '#import "DDLog.h"' "$HTTP_LOGGING"; then
 fi
 grep -q '#import "DDLog.h"' "$HTTP_LOGGING" || { echo "HTTPLogging.h patch failed" >&2; exit 1; }
 
-# --- patch: the "No config file found" Getting-Started notification
-# upstream fires on a configless start posts a system notification titled
-# "Hammerspoon" that opens hammerspoon.org on click. Route it through the
-# host's own notify channel (titled MeiMacPlus, no web click-through) and
-# the console instead.
+# --- patch: drop the "No config file found" system notification entirely.
+# The host UI (settings pane shows the active scripts folder; console log
+# below) already communicates the state, and a posted notification lingers
+# in Notification Center long after the condition is fixed.
 CORESETUP="$VENDOR/extensions/hs/_coresetup.lua"
 if ! grep -q "MeiMacPlus-patched" "$CORESETUP"; then
-  sed -i '' 's|notify.show("Hammerspoon", "No config file found", "Click here for the Getting Started Guide", "__noinitfile")|hs._notify("No config file found - MeiMacPlus") -- MeiMacPlus-patched|' "$CORESETUP"
+  sed -i '' '/local notify = require("hs.notify")/d; /notify.register("__noinitfile"/d; /notify.show("Hammerspoon", "No config file found/d; /hs._notify("No config file found/d' "$CORESETUP"
+  printf '' >> "$CORESETUP"
 fi
+grep -q "MeiMacPlus-patched" "$CORESETUP" || sed -i '' 's|  if not hasinitfile then|  if not hasinitfile then -- MeiMacPlus-patched (notification removed)|' "$CORESETUP"
 grep -q "MeiMacPlus-patched" "$CORESETUP" || { echo "_coresetup notify patch failed" >&2; exit 1; }
+grep -q 'hs._notify("No config file found' "$CORESETUP" && { echo "notification removal failed" >&2; exit 1; } || true
 
 # --- sanity: fail fast if upstream layout ever changes ---
 DYLIB_COUNT="$(find "$VENDOR/hs" -name '*.dylib' | wc -l | tr -d ' ')"
