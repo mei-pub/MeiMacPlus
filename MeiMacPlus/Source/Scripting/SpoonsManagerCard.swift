@@ -5,6 +5,7 @@ struct SpoonUsage: Codable, Equatable {
     var how: String?
     var triggers: [String]?
     var mappingKey: String?
+    var requires: [String]?
     var trigger: String?
     var text: String?
     var zh: String?

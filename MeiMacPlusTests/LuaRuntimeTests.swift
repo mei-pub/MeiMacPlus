@@ -132,12 +132,18 @@ final class LuaRuntimeTests: XCTestCase {
             "local okb, err = pcall(sp.bindHotkeys, sp, { toggle = { {'cmd','alt'}, 'c' } }); " +
             "return okb and 'BOUND' or tostring(err)")
         XCTAssertEqual(r1, "BOUND", "Caffeine bindHotkeys failed: \(r1 ?? "nil") logs: \(logs.suffix(6))")
-        // ClipShow has :toggleShow (covered by the loader's activate chain).
+        // ClipShow has :toggleShow (covered by the loader's activate chain),
+        // and depends on the ModalMgr spoon global (user report: nil index
+        // at fillModalKeys). Preload it the way the loader does.
         let r2 = LuaRuntime.shared.run(
+            "if not spoon.ModalMgr then " +
+            "spoon.ModalMgr = hs.loadSpoon('ModalMgr') " +
+            "if spoon.ModalMgr.start then spoon.ModalMgr:start() end " +
+            "end " +
             "local ok, sp = pcall(hs.loadSpoon, 'ClipShow'); " +
             "if not ok or not sp then return 'LOADFAIL' end " +
-            "return type(sp.toggleShow) == 'function' and 'HAS_TOGGLESHOW' or 'MISSING'")
-        XCTAssertEqual(r2, "HAS_TOGGLESHOW")
+            "return (type(sp.toggleShow) == 'function' and spoon.ModalMgr ~= nil) and 'OK' or 'MISSING'")
+        XCTAssertEqual(r2, "OK", "ClipShow with ModalMgr preload failed: \(r2 ?? "nil") logs: \(logs.suffix(6))")
     }
 
     /// hs.chooser.new instantiates its window from the HSChooserWindow.nib

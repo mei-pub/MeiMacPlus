@@ -85,6 +85,7 @@ for name, entry in spoon_docs.items():
         "how": u.get("how", ""),
         "triggers": u.get("triggers", ["external"]),
         "mappingKey": u.get("mappingKey", ""),
+        "requires": u.get("requires", []),
         "trigger": u.get("trigger", ""),
         "text": u.get("text", ""),
         "zh": zh.get(f"spoon|{name}", ""),
@@ -95,6 +96,7 @@ for name, entry in spoon_docs.items():
             sp["how"] = usage[name]["how"]
             sp["triggers"] = usage[name]["triggers"]
             sp["mappingKey"] = usage[name]["mappingKey"]
+            sp["requires"] = usage[name]["requires"]
             sp["trigger"] = usage[name]["trigger"]
             sp["usage"] = usage[name]["text"]
 (resources / "spoon_usage.json").write_text(
