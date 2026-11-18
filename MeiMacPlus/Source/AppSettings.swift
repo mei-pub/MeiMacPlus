@@ -17,6 +17,7 @@ final class AppSettings: ObservableObject {
         case keepAwake
         case scroll
         case script
+        case behavior
     }
 
     static let shared = AppSettings()
@@ -41,6 +42,9 @@ final class AppSettings: ObservableObject {
             DefaultsKeys.scriptEnabled: false,
         DefaultsKeys.scriptCustomPath: "",
         DefaultsKeys.spoonsEnabled: [String](),
+        DefaultsKeys.dockIconVisible: false,
+        DefaultsKeys.menuBarIconVisible: true,
+        DefaultsKeys.consoleOnTop: false,
         ])
         enabled = defaults.bool(forKey: DefaultsKeys.enabled)
         delayMilliseconds = defaults.integer(forKey: DefaultsKeys.delay)
@@ -58,6 +62,9 @@ final class AppSettings: ObservableObject {
         scriptEnabled = defaults.bool(forKey: DefaultsKeys.scriptEnabled)
         scriptCustomPath = defaults.string(forKey: DefaultsKeys.scriptCustomPath) ?? ""
         spoonsEnabled = Set(defaults.stringArray(forKey: DefaultsKeys.spoonsEnabled) ?? [])
+        dockIconVisible = defaults.bool(forKey: DefaultsKeys.dockIconVisible)
+        menuBarIconVisible = defaults.bool(forKey: DefaultsKeys.menuBarIconVisible)
+        consoleOnTop = defaults.bool(forKey: DefaultsKeys.consoleOnTop)
     }
 
     /// Called on the main thread after any setting changes.
@@ -164,6 +171,24 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(Array(spoonsEnabled).sorted(), forKey: DefaultsKeys.spoonsEnabled); onChange?(.script) }
     }
 
+    // MARK: - App behavior (Hammerspoon-preferences parity)
+
+    /// Show the dock icon (promotes the accessory app to regular). Off by
+    /// default; persisted so hs.dockIcon toggles survive relaunches.
+    @Published var dockIconVisible: Bool {
+        didSet { defaults.set(dockIconVisible, forKey: DefaultsKeys.dockIconVisible); onChange?(.behavior) }
+    }
+
+    /// Show the menu bar icon. Persisted so hs.menuIcon survives relaunches.
+    @Published var menuBarIconVisible: Bool {
+        didSet { defaults.set(menuBarIconVisible, forKey: DefaultsKeys.menuBarIconVisible); onChange?(.behavior) }
+    }
+
+    /// Keep the script console floating above other windows.
+    @Published var consoleOnTop: Bool {
+        didSet { defaults.set(consoleOnTop, forKey: DefaultsKeys.consoleOnTop); onChange?(.behavior) }
+    }
+
     var delaySeconds: TimeInterval { TimeInterval(delayMilliseconds) / 1000 }
 
     static let minDelayMs = 200
@@ -192,5 +217,8 @@ final class AppSettings: ObservableObject {
         static let scriptEnabled = "scriptEnabled"
         static let scriptCustomPath = "scriptCustomPath"
         static let spoonsEnabled = "spoonsEnabled"
+        static let dockIconVisible = "dockIconVisible"
+        static let menuBarIconVisible = "menuBarIconVisible"
+        static let consoleOnTop = "consoleOnTop"
     }
 }

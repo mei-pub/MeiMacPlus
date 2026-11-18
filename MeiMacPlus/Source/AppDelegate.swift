@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         syncKeepAwakeFromSystem()
         applyScrollSettings()
+        applyBehavior()
         applyScriptSettings()
 
         let trusted = CmdQInterceptor.isProcessTrusted()
@@ -176,7 +177,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Host hooks for hs core functions (see LuaRuntime.m / HSMJStubs.m)
 
     @objc func menuBarIconVisible() -> Bool { menuBar.isIconVisible }
-    @objc func setMenuBarIconVisible(_ visible: Bool) { menuBar.setIconVisible(visible) }
+    @objc func setMenuBarIconVisible(_ visible: Bool) {
+        settings.menuBarIconVisible = visible // persists via didSet
+    }
 
     @objc func consoleFloating() -> Bool { scriptConsoleWindow?.window?.level == .floating }
     @objc func setConsoleFloating(_ floating: Bool) {
@@ -276,6 +279,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             applyScrollSettings()
         case .script:
             applyScriptSettings()
+        case .behavior:
+            applyBehavior()
         default:
             break
         }
@@ -340,6 +345,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.alertStyle = .warning
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
+    }
+
+    /// Apply the persisted behavior switches (dock icon / menu icon /
+    /// console-on-top) — Hammerspoon-preferences parity. Also makes the
+    /// menu-bar icon live in the status bar again after hs.menuIcon(false).
+    private func applyBehavior() {
+        NSApp.setActivationPolicy(
+            settings.dockIconVisible ? .regular : .accessory)
+        menuBar.setIconVisible(settings.menuBarIconVisible)
+        if let win = scriptConsoleWindow?.window {
+            win.level = settings.consoleOnTop ? .floating : .normal
+        }
+    }
+
+    /// Clicking the (optional) dock icon reopens settings.
+    func applicationShouldHandleReopen(_ application: NSApplication,
+                                       hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { showSettings() }
+        return true
     }
 
     // MARK: - Scripting
@@ -426,6 +450,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if scriptConsoleWindow == nil {
             scriptConsoleWindow = ScriptConsoleWindowController(store: scriptLogStore)
         }
+        scriptConsoleWindow?.window?.level = settings.consoleOnTop ? .floating : .normal
         scriptConsoleWindow?.present()
     }
 

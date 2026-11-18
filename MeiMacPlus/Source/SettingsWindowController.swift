@@ -468,6 +468,10 @@ private struct ScriptSettingsPane: View {
                     Text(L("settings.script.files.footer"))
                 }
 
+                SettingsCard(L("settings.behavior.section")) {
+                    BehaviorRows()
+                }
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L("settings.spoons.section"))
                         .font(.subheadline.weight(.semibold))
@@ -526,6 +530,44 @@ private struct ScriptDirectoryPicker: View {
             if let url = try? result.get().first {
                 settings.scriptCustomPath = url.path
             }
+        }
+    }
+}
+
+/// Hammerspoon-preferences parity: login/dock/menu/console + AX status.
+private struct BehaviorRows: View {
+    @ObservedObject private var settings = AppSettings.shared
+    @State private var launchAtLogin = LoginItemManager.isEnabled
+    @State private var trusted = CmdQInterceptor.isProcessTrusted()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(L("settings.launchAtLogin"), isOn: $launchAtLogin)
+                .onChange(of: launchAtLogin) { on in
+                    if !LoginItemManager.setEnabled(on) {
+                        launchAtLogin = LoginItemManager.isEnabled
+                    }
+                }
+            Toggle(L("settings.behavior.dock"), isOn: $settings.dockIconVisible)
+            Toggle(L("settings.behavior.menuIcon"), isOn: $settings.menuBarIconVisible)
+                .disabled(!settings.dockIconVisible)
+                .help(settings.dockIconVisible ? "" : L("settings.behavior.menuIcon.disabled"))
+            Toggle(L("settings.behavior.consoleOnTop"), isOn: $settings.consoleOnTop)
+
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(trusted ? Color.green : Color.red)
+                    .frame(width: 8, height: 8)
+                Text(trusted ? L("settings.behavior.ax.ok") : L("settings.behavior.ax.no"))
+                    .font(.system(size: 12))
+                if !trusted {
+                    Button(L("settings.behavior.ax.grant")) {
+                        (NSApp.delegate as? AppDelegate)?.showPermissionGuide()
+                    }
+                }
+                Spacer()
+            }
+            .onAppear { trusted = CmdQInterceptor.isProcessTrusted() }
         }
     }
 }
