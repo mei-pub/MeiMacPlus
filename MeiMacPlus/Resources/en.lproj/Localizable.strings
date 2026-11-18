@@ -158,3 +158,4 @@
 "settings.spoons.trigger.interval" = "Scheduled";
 "settings.spoons.trigger.minutes" = "min";
 "settings.spoons.trigger.autoHint" = "Enabled spoon loads with its own default behavior";
+"settings.spoons.col.params" = "Parameters";
