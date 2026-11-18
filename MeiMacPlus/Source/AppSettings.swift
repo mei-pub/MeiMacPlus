@@ -40,6 +40,7 @@ final class AppSettings: ObservableObject {
             DefaultsKeys.scrollBlacklist: [String](),
             DefaultsKeys.scriptEnabled: false,
         DefaultsKeys.scriptCustomPath: "",
+        DefaultsKeys.spoonsEnabled: [String](),
         ])
         enabled = defaults.bool(forKey: DefaultsKeys.enabled)
         delayMilliseconds = defaults.integer(forKey: DefaultsKeys.delay)
@@ -56,6 +57,7 @@ final class AppSettings: ObservableObject {
         scrollBlacklist = defaults.stringArray(forKey: DefaultsKeys.scrollBlacklist) ?? []
         scriptEnabled = defaults.bool(forKey: DefaultsKeys.scriptEnabled)
         scriptCustomPath = defaults.string(forKey: DefaultsKeys.scriptCustomPath) ?? ""
+        spoonsEnabled = Set(defaults.stringArray(forKey: DefaultsKeys.spoonsEnabled) ?? [])
     }
 
     /// Called on the main thread after any setting changes.
@@ -155,6 +157,13 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(scriptCustomPath, forKey: DefaultsKeys.scriptCustomPath); onChange?(.script) }
     }
 
+    /// Bundled Spoons that should be active (loaded after the runtime boots).
+    /// All Spoons ship inside the app; nothing is enabled until the user
+    /// flips its switch.
+    @Published var spoonsEnabled: Set<String> {
+        didSet { defaults.set(Array(spoonsEnabled).sorted(), forKey: DefaultsKeys.spoonsEnabled); onChange?(.script) }
+    }
+
     var delaySeconds: TimeInterval { TimeInterval(delayMilliseconds) / 1000 }
 
     static let minDelayMs = 200
@@ -182,5 +191,6 @@ final class AppSettings: ObservableObject {
         static let scrollBlacklist = "scrollBlacklist"
         static let scriptEnabled = "scriptEnabled"
         static let scriptCustomPath = "scriptCustomPath"
+        static let spoonsEnabled = "spoonsEnabled"
     }
 }

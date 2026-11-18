@@ -457,6 +457,10 @@ private struct ScriptSettingsPane: View {
                 } footer: {
                     Text(L("settings.script.files.footer"))
                 }
+
+                SettingsCard(L("settings.spoons.section")) {
+                    SpoonsManagerCard()
+                }
             }
         }
     }

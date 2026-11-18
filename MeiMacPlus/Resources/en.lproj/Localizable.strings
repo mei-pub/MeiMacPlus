@@ -131,3 +131,7 @@
 "menubar.scriptHelp" = "Scripting Help…";
 "settings.script.help" = "Help…";
 "scripthelp.title" = "Scripting Help";
+"settings.spoons.section" = "Bundled Spoons";
+"settings.spoons.filter" = "Filter / search…";
+"settings.spoons.count" = "%d of %d enabled";
+"settings.spoons.footer" = "All 89 official Spoons are bundled and OFF by default. Flipping a switch loads it (and calls start()) after a script reload; detailed docs: menu bar → Scripting Help → Spoons.";

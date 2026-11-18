@@ -19,6 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var scriptHelpWindow: ScriptHelpWindowController?
 
     let scriptLogStore = ScriptLogStore()
+    /// The spoon set the running Lua environment was booted with.
+    private var lastLoadedSpoons: Set<String> = []
 
     /// Guards settings.keepAwakeOnLidClose assignments that must NOT kick
     /// off another helper round-trip (launch-time sync, revert-after-failure).
@@ -367,15 +369,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let configDir = ScriptConfig.prepareConfigDir(customPath: settings.scriptCustomPath)
 
+        // Bundled Spoons are made require-able through this path entry that
+        // the patched setup.lua appends to package.path (see fetch_hs_runtime.sh).
+        if let spoonsURL = Bundle.main.resourceURL?.appendingPathComponent("spoons") {
+            setenv("MEI_SPOONS_PATH", spoonsURL.path, 1)
+        }
+
         // A running runtime survives only if it is already on the resolved
-        // directory; changing the scripts folder must restart the environment
-        // instead of silently keeping the old one until the next app launch.
-        if runtime.isRunning && runtime.configDir == configDir.path { return }
+        // directory AND the enabled-spoon set is unchanged; either change
+        // must restart the environment instead of silently keeping the old one.
+        let enabledSpoons = Set(settings.spoonsEnabled)
+        if runtime.isRunning && runtime.configDir == configDir.path
+            && lastLoadedSpoons == enabledSpoons { return }
         if runtime.isRunning {
-            sessionLog.notice("scripts directory changed — reloading Lua runtime")
+            sessionLog.notice("script config changed — reloading Lua runtime")
             runtime.stop()
         }
         if runtime.start(withConfigDir: configDir.path) {
+            lastLoadedSpoons = enabledSpoons
+            loadEnabledSpoons(Array(enabledSpoons))
             sessionLog.notice("Lua runtime started (config: \(configDir.path, privacy: .public))")
         } else {
             sessionLog.error("Lua runtime failed to start (vendored runtime incomplete?)")
@@ -428,6 +440,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard LuaRuntime.shared.isRunning else { return }
         sessionLog.notice("reloading scripts")
         LuaRuntime.shared.reload()
+    }
+
+    /// Load the enabled bundled Spoons into the freshly booted runtime.
+    /// Each spoon is isolated in pcall: a broken spoon logs instead of
+    /// aborting the rest. start() is called when the spoon provides it.
+    private func loadEnabledSpoons(_ names: [String]) {
+        guard !names.isEmpty else { return }
+        let list = names.map { "\"" + $0 + "\"" }
+            .joined(separator: ",")
+        LuaRuntime.shared.run(
+            "for _, n in ipairs({\(list)}) do " +
+            "local ok, err = pcall(function() " +
+            "local sp = hs.loadSpoon(n) " +
+            "if sp and sp.start then sp:start() end " +
+            "end) " +
+            "if not ok then print('-- spoon ' .. n .. ' failed: ' .. tostring(err)) end " +
+            "end")
+        sessionLog.notice("loaded \(names.count) spoon(s)")
     }
 
     // MARK: - Keep awake (lid closed)

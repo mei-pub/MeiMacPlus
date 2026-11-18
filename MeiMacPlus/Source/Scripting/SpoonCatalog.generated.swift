@@ -1,0 +1,110 @@
+//
+//  SpoonCatalog.generated.swift — one-line bilingual summaries for the
+//  bundled official Spoons. Generated from scripts/spoon_summaries.json;
+//  regenerate rather than hand-editing.
+//
+
+struct SpoonSummary: Identifiable, Equatable {
+    let name: String
+    let zh: String
+    let en: String
+    var id: String { name }
+}
+
+enum SpoonCatalog {
+    static let all: [SpoonSummary] = [
+        SpoonSummary(name: "AClock", zh: "时钟浮窗", en: "Floating clock"),
+        SpoonSummary(name: "AllBrightness", zh: "调节所有显示器亮度", en: "Adjust all displays' brightness"),
+        SpoonSummary(name: "AppLauncher", zh: "快捷启动应用", en: "Quick app launcher"),
+        SpoonSummary(name: "AppWindowSwitcher", zh: "当前应用窗口切换", en: "Switch windows of the active app"),
+        SpoonSummary(name: "ArrangeDesktop", zh: "记忆/恢复桌面图标位置", en: "Save & restore desktop icon positions"),
+        SpoonSummary(name: "Asana", zh: "Asana 任务通知", en: "Asana task notifications"),
+        SpoonSummary(name: "AutoMuteOnSleep", zh: "睡眠时自动静音", en: "Auto-mute on sleep"),
+        SpoonSummary(name: "BingDaily", zh: "每日 Bing 壁纸", en: "Bing daily wallpaper"),
+        SpoonSummary(name: "BonjourLauncher", zh: "网络服务启动器", en: "Bonjour service launcher"),
+        SpoonSummary(name: "BrewInfo", zh: "Homebrew 信息查询", en: "Homebrew info lookup"),
+        SpoonSummary(name: "Caffeine", zh: "菜单栏防休眠（咖啡杯）/ Menu bar caffeine toggle", en: "菜单栏防休眠（咖啡杯）/ Menu bar caffeine toggle"),
+        SpoonSummary(name: "Calendar", zh: "菜单栏日历", en: "Menu bar calendar"),
+        SpoonSummary(name: "Cherry", zh: "键盘按键提示", en: "Keyboard key hints"),
+        SpoonSummary(name: "CircleClock", zh: "圆形时钟菜单栏项", en: "Circular clock menu item"),
+        SpoonSummary(name: "ClipShow", zh: "剪贴板历史查看", en: "Clipboard history viewer"),
+        SpoonSummary(name: "ClipboardTool", zh: "剪贴板管理", en: "Clipboard manager"),
+        SpoonSummary(name: "ColorPicker", zh: "屏幕取色器", en: "Screen color picker"),
+        SpoonSummary(name: "Commander", zh: "命令面板", en: "Command palette"),
+        SpoonSummary(name: "CountDown", zh: "倒计时", en: "Countdown timer"),
+        SpoonSummary(name: "DeepLTranslate", zh: "DeepL 翻译", en: "DeepL translation"),
+        SpoonSummary(name: "EjectMenu", zh: "菜单栏弹出卷/盘", en: "Eject volumes menu"),
+        SpoonSummary(name: "EmmyLua", zh: "EmmyLua 补全支持", en: "EmmyLua completions"),
+        SpoonSummary(name: "Emojis", zh: "表情选择器", en: "Emoji picker"),
+        SpoonSummary(name: "EvernoteOpenAndTag", zh: "Evernote 快速记笔记", en: "Evernote quick notes"),
+        SpoonSummary(name: "FadeLogo", zh: "唤醒时渐显", en: "Fade-in on wake"),
+        SpoonSummary(name: "FnMate", zh: "Fn 键映射", en: "Fn key mappings"),
+        SpoonSummary(name: "ForceTouchMapper", zh: "触控板强制点击映射", en: "Force Touch mapping"),
+        SpoonSummary(name: "HCalendar", zh: "日历事件提醒", en: "Calendar event reminders"),
+        SpoonSummary(name: "HSKeybindings", zh: "快捷键速查面板", en: "Keybindings cheat sheet"),
+        SpoonSummary(name: "HSaria2", zh: "aria2 下载控制", en: "aria2 download control"),
+        SpoonSummary(name: "HSearch", zh: "聚合搜索", en: "Multi-engine search"),
+        SpoonSummary(name: "HeadphoneAutoPause", zh: "拔耳机自动暂停", en: "Auto-pause on headphone unplug"),
+        SpoonSummary(name: "HighSierraiTunesMediaFix", zh: "iTunes 媒体修复（旧系统）/ iTunes media fix (legacy)", en: "iTunes 媒体修复（旧系统）/ iTunes media fix (legacy)"),
+        SpoonSummary(name: "HoldToQuit", zh: "按住退出（SlowQuitApps 同款）/ Hold to quit (SlowQuitApps-style)", en: "按住退出（SlowQuitApps 同款）/ Hold to quit (SlowQuitApps-style)"),
+        SpoonSummary(name: "InputMethodIndicator", zh: "输入法指示器", en: "Input method indicator"),
+        SpoonSummary(name: "InputSourceSwitch", zh: "输入法自动切换", en: "Auto input-source switching"),
+        SpoonSummary(name: "KSheet", zh: "快捷键速查覆盖层", en: "Keybindings overlay"),
+        SpoonSummary(name: "Keychain", zh: "钥匙串访问", en: "Keychain access"),
+        SpoonSummary(name: "Leanpub", zh: "Leanpub 写作发布", en: "Leanpub publishing"),
+        SpoonSummary(name: "LeftRightHotkey", zh: "区分左右修饰键热键", en: "Left/right modifier hotkeys"),
+        SpoonSummary(name: "LookupSelection", zh: "选中内容查询", en: "Lookup selected text"),
+        SpoonSummary(name: "MenubarFlag", zh: "国旗/输入法菜单栏图标", en: "Country-flag menu icon"),
+        SpoonSummary(name: "MicMute", zh: "麦克风静音切换", en: "Microphone mute toggle"),
+        SpoonSummary(name: "MiddleClickDragScroll", zh: "中键拖拽滚动", en: "Middle-click drag scrolling"),
+        SpoonSummary(name: "MiroWindowsManager", zh: "窗口管理快捷键", en: "Window manager hotkeys"),
+        SpoonSummary(name: "ModalMgr", zh: "模态快捷键管理器", en: "Modal keybinding manager"),
+        SpoonSummary(name: "MountedVolumes", zh: "卷挂载菜单", en: "Mounted volumes menu"),
+        SpoonSummary(name: "MouseCircle", zh: "环形应用启动器", en: "Circular mouse launcher"),
+        SpoonSummary(name: "MouseFollowsFocus", zh: "鼠标跟随焦点窗口", en: "Mouse follows focused window"),
+        SpoonSummary(name: "MoveSpaces", zh: "跨 Space 移动窗口", en: "Move windows across Spaces"),
+        SpoonSummary(name: "MusicAppMediaFix", zh: "音乐 App 媒体键修复", en: "Music.app media-key fix"),
+        SpoonSummary(name: "OBS", zh: "OBS 直播控制", en: "OBS control"),
+        SpoonSummary(name: "PaperWM", zh: "平铺式窗口管理器", en: "Tiling window manager"),
+        SpoonSummary(name: "PasswordGenerator", zh: "密码生成器", en: "Password generator"),
+        SpoonSummary(name: "Pastebin", zh: "粘贴到 pastebin", en: "Paste to pastebin service"),
+        SpoonSummary(name: "PersonalHotspot", zh: "个人热点控制", en: "Personal hotspot control"),
+        SpoonSummary(name: "PopupTranslateSelection", zh: "选中弹窗翻译", en: "Pop-up translate selection"),
+        SpoonSummary(name: "PushToTalk", zh: "按住说话（麦克风）/ Push-to-talk microphone", en: "按住说话（麦克风）/ Push-to-talk microphone"),
+        SpoonSummary(name: "RecursiveBinder", zh: "递归按键绑定", en: "Recursive key bindings"),
+        SpoonSummary(name: "ReloadConfiguration", zh: "配置变更自动重载", en: "Auto-reload config"),
+        SpoonSummary(name: "RoundedCorners", zh: "圆角窗口", en: "Rounded window corners"),
+        SpoonSummary(name: "Seal", zh: "搜索/启动器（类 Spotlight）/ Spotlight-like launcher", en: "搜索/启动器（类 Spotlight）/ Spotlight-like launcher"),
+        SpoonSummary(name: "SendToOmniFocus", zh: "发送到 OmniFocus", en: "Send to OmniFocus"),
+        SpoonSummary(name: "Shade", zh: "一键盖黑屏", en: "One-key screen shade"),
+        SpoonSummary(name: "SleepCorners", zh: "睡眠触发角", en: "Hot-corner sleep"),
+        SpoonSummary(name: "SpeedMenu", zh: "网速菜单栏项", en: "Network speed menu item"),
+        SpoonSummary(name: "SpoonInstall", zh: "Spoon 自动安装/更新", en: "Spoon installer & updater"),
+        SpoonSummary(name: "TextClipboardHistory", zh: "剪贴板文本历史", en: "Text clipboard history"),
+        SpoonSummary(name: "TimeFlow", zh: "时间流逝显示", en: "Time-flow display"),
+        SpoonSummary(name: "TimeMachineProgress", zh: "Time Machine 进度", en: "Time Machine progress"),
+        SpoonSummary(name: "ToggleScreenRotation", zh: "旋转屏幕切换", en: "Toggle screen rotation"),
+        SpoonSummary(name: "ToggleSkypeMute", zh: "Skype 静音切换", en: "Toggle Skype mute"),
+        SpoonSummary(name: "Token", zh: "双因素令牌助手", en: "2FA token helper"),
+        SpoonSummary(name: "Tunnelblick", zh: "Tunnelblick VPN 控制", en: "Tunnelblick VPN control"),
+        SpoonSummary(name: "TurboBoost", zh: "CPU 睿频开关", en: "Turbo Boost toggle"),
+        SpoonSummary(name: "URLDispatcher", zh: "URL 分发规则", en: "URL dispatch rules"),
+        SpoonSummary(name: "USBDeviceActions", zh: "USB 设备触发动作", en: "USB device actions"),
+        SpoonSummary(name: "UniversalArchive", zh: "邮件/任务归档", en: "Universal archiving"),
+        SpoonSummary(name: "UnsplashRandom", zh: "随机 Unsplash 壁纸", en: "Random Unsplash wallpaper"),
+        SpoonSummary(name: "UnsplashZ", zh: "Unsplash 壁纸增强", en: "Unsplash wallpapers+"),
+        SpoonSummary(name: "VolumeScroll", zh: "滚轮调节音量", en: "Scroll-wheel volume"),
+        SpoonSummary(name: "WiFiTransitions", zh: "Wi-Fi 切换动作", en: "Wi-Fi transition actions"),
+        SpoonSummary(name: "WifiNotifier", zh: "Wi-Fi 状态通知", en: "Wi-Fi notifications"),
+        SpoonSummary(name: "WinWin", zh: "窗口管理快捷键集", en: "Window management hotkeys"),
+        SpoonSummary(name: "WindowGrid", zh: "网格选择窗口区域", en: "Grid window placement"),
+        SpoonSummary(name: "WindowHalfsAndThirds", zh: "半屏/三分屏布局", en: "Halfs & thirds layouts"),
+        SpoonSummary(name: "WindowScreenLeftAndRight", zh: "移到左/右屏", en: "Move to left/right screen"),
+        SpoonSummary(name: "WindowSigils", zh: "窗口标记定位", en: "Window sigils"),
+        SpoonSummary(name: "ZeroOffset", zh: "屏幕偏移修正", en: "Screen offset correction"),
+    ]
+
+    static func summary(for name: String) -> SpoonSummary? {
+        all.first { $0.name == name }
+    }
+}

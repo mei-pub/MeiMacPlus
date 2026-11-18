@@ -38,6 +38,7 @@ final class AppSettingsTests: XCTestCase {
         settings.whitelist = ["com.apple.Notes"]
         settings.keepAwakeOnLidClose = true
         settings.scriptEnabled = true
+        settings.spoonsEnabled = ["Caffeine", "PaperWM"]
 
         let reloaded = AppSettings(defaults: suite)
         XCTAssertFalse(reloaded.enabled)
@@ -47,6 +48,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.whitelist, ["com.apple.Notes"])
         XCTAssertTrue(reloaded.keepAwakeOnLidClose)
         XCTAssertTrue(reloaded.scriptEnabled)
+        XCTAssertEqual(reloaded.spoonsEnabled, ["Caffeine", "PaperWM"])
     }
 
     func testDelayClampedToSaneRange() {
