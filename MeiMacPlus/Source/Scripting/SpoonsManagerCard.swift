@@ -82,7 +82,7 @@ struct SpoonsManagerCard: View {
                 }
                 .width(64)
             }
-            .frame(minHeight: 320)
+            .frame(height: 280)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primary.opacity(0.03))
