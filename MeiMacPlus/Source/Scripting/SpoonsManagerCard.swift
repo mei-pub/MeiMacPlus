@@ -1,8 +1,5 @@
 import SwiftUI
 
-/// Settings card listing every bundled official Spoon with a per-spoon
-/// switch. All Spoons ship inside the app bundle; enabling one loads it
-/// into the Lua runtime (start() called when provided) after a reload.
 /// Usage text for one spoon, read from the assembler's spoon_usage.json.
 struct SpoonUsage: Codable, Equatable {
     var how: String?
@@ -29,10 +26,12 @@ enum SpoonUsageStore {
     }
 }
 
+/// The bundled-Spoons manager: a native macOS Table (name | usage | switch)
+/// that fills the remaining pane height and scrolls on its own — no nested
+/// scroll containers, every spoon visible.
 struct SpoonsManagerCard: View {
     @ObservedObject private var settings = AppSettings.shared
     @State private var filter = ""
-    @State private var expanded: Set<String> = []
 
     private var visible: [SpoonSummary] {
         SpoonCatalog.all.filter {
@@ -43,13 +42,7 @@ struct SpoonsManagerCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(L("settings.spoons.title"))
-                .font(.system(size: 15, weight: .semibold))
-            Text(L("settings.spoons.intro"))
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 TextField(L("settings.spoons.filter"), text: $filter)
                     .textFieldStyle(.roundedBorder)
@@ -59,122 +52,67 @@ struct SpoonsManagerCard: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            VStack(spacing: 0) {
-                ForEach(visible) { spoon in
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 10) {
-                            Button {
-                                if expanded.contains(spoon.name) {
-                                    expanded.remove(spoon.name)
-                                } else {
-                                    expanded.insert(spoon.name)
-                                }
-                            } label: {
-                                Image(systemName: expanded.contains(spoon.name)
-                                      ? "chevron.down" : "chevron.right")
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                            .frame(width: 14)
-                            Text(spoon.name)
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                .frame(width: 170, alignment: .leading)
-                            Text(spoon.zh)
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Toggle("", isOn: binding(for: spoon.name))
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if expanded.contains(spoon.name) {
-                                expanded.remove(spoon.name)
-                            } else {
-                                expanded.insert(spoon.name)
-                            }
-                        }
-                        if expanded.contains(spoon.name) {
-                            spoonUsageView(spoon)
-                                .padding(.horizontal, 34)
-                                .padding(.bottom, 8)
-                        }
-                    }
-                    if spoon.id != visible.last?.id {
-                        Divider().padding(.leading, 10)
+            Table(visible) {
+                TableColumn(L("settings.spoons.col.name")) { spoon in
+                    HStack(spacing: 4) {
+                        Image(systemName: usageBadgeIcon(for: spoon.name))
+                            .font(.system(size: 8))
+                            .foregroundStyle(.orange)
+                        Text(spoon.name)
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                     }
                 }
+                .width(180)
+
+                TableColumn(L("settings.spoons.col.usage")) { spoon in
+                    usageText(for: spoon)
+                }
+
+                TableColumn(L("settings.spoons.col.toggle")) { spoon in
+                    Toggle("", isOn: binding(for: spoon.name))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                .width(64)
             }
-            .frame(height: 300)
+            .frame(minHeight: 320)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primary.opacity(0.03))
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
             Text(L("settings.spoons.footer"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
     }
 
+    /// ⚡ auto / 🎚 needs-config badge
+    private func usageBadgeIcon(for name: String) -> String {
+        usage(for: name)?.how == "config" ? "slider.horizontal.3" : "bolt.fill"
+    }
+
+    private func usage(for name: String) -> SpoonUsage? {
+        SpoonUsageStore.usage(for: name)
+    }
+
+    /// Column cell: hand-written user-view usage; trigger on its own line.
     @ViewBuilder
-    private func spoonUsageView(_ spoon: SpoonSummary) -> some View {
-        let usage = SpoonUsageStore.usage(for: spoon.name)
-        VStack(alignment: .leading, spacing: 4) {
-            Text(L("settings.spoons.usage"))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
-            if let how = usage?.how, !how.isEmpty {
-                HStack(alignment: .top, spacing: 4) {
-                    Image(systemName: how == "auto" ? "bolt.fill" : "slider.horizontal.3")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.orange)
-                        .padding(.top, 3)
-                    Text(how == "auto" ? L("settings.spoons.how.auto") : L("settings.spoons.how.config"))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.orange)
-                }
-            }
-            if let text = usage?.text, !text.isEmpty {
-                Text(text)
-                    .font(.system(size: 12))
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if let zh = usage?.zh, !zh.isEmpty {
-                Text(zh)
-                    .font(.system(size: 12))
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                Text(spoon.zh)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-            }
+    private func usageText(for spoon: SpoonSummary) -> some View {
+        let usage = usage(for: spoon.name)
+        VStack(alignment: .leading, spacing: 2) {
+            let text = usage?.text?.isEmpty == false ? usage!.text! : spoon.zh
             if let trigger = usage?.trigger, !trigger.isEmpty {
-                HStack(alignment: .top, spacing: 4) {
-                    Text(L("settings.spoons.trigger"))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                    Text(trigger)
-                        .font(.system(size: 11))
-                        .textSelection(.enabled)
-                }
+                Text(trigger)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.orange)
             }
-            if let en = usage?.en, !en.isEmpty {
-                Text(en)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Text("hs.loadSpoon(\"\(spoon.name)\")")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
+            Text(text)
+                .font(.system(size: 11))
+                .foregroundStyle(.primary.opacity(0.85))
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.vertical, 2)
     }
 
     private func binding(for name: String) -> Binding<Bool> {
