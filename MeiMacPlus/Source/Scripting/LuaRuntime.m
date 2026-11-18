@@ -592,6 +592,15 @@ static BOOL LuaRuntimeInitEnvironment(void) {
 
     sConfigDir = [configDir copy];
 
+    // Bundled Spoons become require-able via this path entry that the
+    // patched setup.lua appends to package.path (see fetch_hs_runtime.sh).
+    // Set here — not in the app layer — so the XCTest host gets it too.
+    NSString *spoonsDir = [NSBundle.mainBundle.resourceURL
+                           URLByAppendingPathComponent:@"spoons"];
+    if (spoonsDir) {
+        setenv("MEI_SPOONS_PATH", spoonsDir.fileSystemRepresentation, 1);
+    }
+
     // Load the host-symbol library BEFORE any hs.* dylib is dlopened:
     // HSapplication/HSuielement/HSwindow (vendored HSuicore) and the MJ*
     // stubs live in MeiHSRuntime.dylib. Executables don't export symbols,

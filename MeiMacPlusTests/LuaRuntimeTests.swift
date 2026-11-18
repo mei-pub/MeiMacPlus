@@ -121,6 +121,25 @@ final class LuaRuntimeTests: XCTestCase {
     /// Every vendored hs.* module must at least `require` cleanly — this is
     /// the regression gate for host-symbol gaps (see HSMJStubs.m) and for
     /// the excluded-networking list in scripts/fetch_hs_runtime.sh.
+    /// Hotkey-capable spoons must activate via their OFFICIAL bindHotkeys
+    /// mapping (user report: "-- spoon ClipShow has no toggle/show/run").
+    func testSpoonTriggerBinding() throws {
+        try start()
+        // Caffeine exposes :bindHotkeys({toggle=…}) and :toggle().
+        let r1 = LuaRuntime.shared.run(
+            "local ok, sp = pcall(hs.loadSpoon, 'Caffeine'); " +
+            "if not ok or not sp then return 'LOADFAIL' end " +
+            "local okb, err = pcall(sp.bindHotkeys, sp, { toggle = { {'cmd','alt'}, 'c' } }); " +
+            "return okb and 'BOUND' or tostring(err)")
+        XCTAssertEqual(r1, "BOUND", "Caffeine bindHotkeys failed: \(r1 ?? "nil") logs: \(logs.suffix(6))")
+        // ClipShow has :toggleShow (covered by the loader's activate chain).
+        let r2 = LuaRuntime.shared.run(
+            "local ok, sp = pcall(hs.loadSpoon, 'ClipShow'); " +
+            "if not ok or not sp then return 'LOADFAIL' end " +
+            "return type(sp.toggleShow) == 'function' and 'HAS_TOGGLESHOW' or 'MISSING'")
+        XCTAssertEqual(r2, "HAS_TOGGLESHOW")
+    }
+
     /// hs.chooser.new instantiates its window from the HSChooserWindow.nib
     /// vendored into Resources; without the nib it silently returns nil.
     func testChooserInstanceCreation() throws {
