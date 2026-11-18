@@ -5,8 +5,11 @@ import SwiftUI
 /// into the Lua runtime (start() called when provided) after a reload.
 /// Usage text for one spoon, read from the assembler's spoon_usage.json.
 struct SpoonUsage: Codable, Equatable {
-    var zh: String
-    var en: String
+    var how: String?
+    var trigger: String?
+    var text: String?
+    var zh: String?
+    var en: String?
 }
 
 enum SpoonUsageStore {
@@ -126,7 +129,22 @@ struct SpoonsManagerCard: View {
             Text(L("settings.spoons.usage"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
-            if let zh = usage?.zh, !zh.isEmpty {
+            if let how = usage?.how, !how.isEmpty {
+                HStack(alignment: .top, spacing: 4) {
+                    Image(systemName: how == "auto" ? "bolt.fill" : "slider.horizontal.3")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.orange)
+                        .padding(.top, 3)
+                    Text(how == "auto" ? L("settings.spoons.how.auto") : L("settings.spoons.how.config"))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.orange)
+                }
+            }
+            if let text = usage?.text, !text.isEmpty {
+                Text(text)
+                    .font(.system(size: 12))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if let zh = usage?.zh, !zh.isEmpty {
                 Text(zh)
                     .font(.system(size: 12))
                     .fixedSize(horizontal: false, vertical: true)
@@ -135,10 +153,21 @@ struct SpoonsManagerCard: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
-            if let en = usage?.en, !en.isEmpty, en != usage?.zh {
+            if let trigger = usage?.trigger, !trigger.isEmpty {
+                HStack(alignment: .top, spacing: 4) {
+                    Text(L("settings.spoons.trigger"))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    Text(trigger)
+                        .font(.system(size: 11))
+                        .textSelection(.enabled)
+                }
+            }
+            if let en = usage?.en, !en.isEmpty {
                 Text(en)
-                    .font(.system(size: 11))
+                    .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Text("hs.loadSpoon(\"\(spoon.name)\")")

@@ -69,14 +69,30 @@ emit(resources / "ScriptSpoons.data.js", {
     "__DOCS_ZH__": json.dumps(zh, ensure_ascii=False),
 })
 
-# Per-spoon usage for the settings manager (plain JSON, read by Swift):
-# name -> {zh, en} usage description (the spoon's module doc).
+# Per-spoon usage for the settings manager + help window (plain JSON, read
+# by Swift and shipped to the JS side): curated user-view usage (what the
+# spoon does once enabled — hotkey/menu/auto behavior) plus the developer
+# doc zh/en as secondary reference.
+curated = {}
+usage_src = vendor.parent.parent / "scripts" / "spoon_usage_zh.json"
+if usage_src.exists():
+    curated = json.loads(usage_src.read_text())
+
 usage = {}
 for name, entry in spoon_docs.items():
+    u = curated.get(name, {})
     usage[name] = {
+        "how": u.get("how", ""),
+        "trigger": u.get("trigger", ""),
+        "text": u.get("text", ""),
         "zh": zh.get(f"spoon|{name}", ""),
         "en": (entry.get("doc") or entry.get("desc") or "").strip(),
     }
+    for i, sp in enumerate(spoon_list):
+        if sp["name"] == name:
+            sp["how"] = usage[name]["how"]
+            sp["trigger"] = usage[name]["trigger"]
+            sp["usage"] = usage[name]["text"]
 (resources / "spoon_usage.json").write_text(
     json.dumps(usage, ensure_ascii=False, indent=1))
 print(f"help data: {len(docs)} modules, {len(spoon_list)} spoons, "
