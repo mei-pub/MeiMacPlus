@@ -4,7 +4,8 @@ import WebKit
 /// Bilingual scripting help (getting started, module overview, searchable API
 /// reference) rendered from the bundled HTML + the vendored docs.json —
 /// strictly matching the embedded runtime version.
-final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate {
+final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate {
+
 
     init() {
         let window = NSWindow(
@@ -31,6 +32,7 @@ final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate {
 
         super.init(window: window)
         window.delegate = self
+        webView.navigationDelegate = self
     }
 
     required init?(coder: NSCoder) { nil }
@@ -38,5 +40,17 @@ final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate {
     func present() {
         showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Module/Spoon links point at hammerspoon.org — hand them to the
+    /// default browser instead of navigating the help page away.
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let url = navigationAction.request.url, url.scheme == "http" || url.scheme == "https" {
+            NSWorkspace.shared.open(url)
+            decisionHandler(.cancel)
+            return
+        }
+        decisionHandler(.allow)
     }
 }
