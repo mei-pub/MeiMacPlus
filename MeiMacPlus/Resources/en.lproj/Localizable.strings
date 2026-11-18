@@ -141,3 +141,6 @@
 "settings.spoons.how.auto" = "Works right after enabling";
 "settings.spoons.how.config" = "Needs init.lua configuration";
 "settings.spoons.trigger" = "Trigger:";
+"settings.spoons.col.name" = "Spoon";
+"settings.spoons.col.usage" = "Usage";
+"settings.spoons.col.toggle" = "On";

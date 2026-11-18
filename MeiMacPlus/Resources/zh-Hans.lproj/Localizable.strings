@@ -141,3 +141,6 @@
 "settings.spoons.how.auto" = "启用即生效";
 "settings.spoons.how.config" = "需在 init.lua 配置后生效";
 "settings.spoons.trigger" = "触发方式：";
+"settings.spoons.col.name" = "名称";
+"settings.spoons.col.usage" = "使用说明";
+"settings.spoons.col.toggle" = "启用";

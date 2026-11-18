@@ -436,11 +436,13 @@ private struct ScrollSettingsPane: View {
 
 // MARK: - Scripting
 
+/// Fixed layout (no outer ScrollView): the Spoons table below owns its own
+/// scrolling and must fill the remaining pane height to show every row.
 private struct ScriptSettingsPane: View {
     @ObservedObject private var settings = AppSettings.shared
 
     var body: some View {
-        SettingsPane {
+        VStack(alignment: .leading, spacing: 14) {
             SettingsCard {
                 Toggle(L("settings.script.enable"), isOn: $settings.scriptEnabled)
             } footer: {
@@ -466,11 +468,21 @@ private struct ScriptSettingsPane: View {
                     Text(L("settings.script.files.footer"))
                 }
 
-                SettingsCard(L("settings.spoons.section")) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L("settings.spoons.section"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 8)
                     SpoonsManagerCard()
+                        .frame(maxHeight: .infinity)
                 }
+            } else {
+                Spacer()
             }
         }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
 
