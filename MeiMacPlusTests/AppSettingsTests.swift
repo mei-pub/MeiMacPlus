@@ -26,6 +26,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(settings.invertList)
         XCTAssertTrue(settings.whitelist.isEmpty)
         XCTAssertFalse(settings.keepAwakeOnLidClose, "keep-awake is off by default")
+        XCTAssertFalse(settings.scriptEnabled, "scripting is off by default")
     }
 
     func testWritesPersistToDefaults() {
@@ -36,6 +37,7 @@ final class AppSettingsTests: XCTestCase {
         settings.invertList = true
         settings.whitelist = ["com.apple.Notes"]
         settings.keepAwakeOnLidClose = true
+        settings.scriptEnabled = true
 
         let reloaded = AppSettings(defaults: suite)
         XCTAssertFalse(reloaded.enabled)
@@ -44,6 +46,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(reloaded.invertList)
         XCTAssertEqual(reloaded.whitelist, ["com.apple.Notes"])
         XCTAssertTrue(reloaded.keepAwakeOnLidClose)
+        XCTAssertTrue(reloaded.scriptEnabled)
     }
 
     func testDelayClampedToSaneRange() {

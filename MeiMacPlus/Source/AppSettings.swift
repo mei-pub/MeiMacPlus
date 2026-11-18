@@ -16,6 +16,7 @@ final class AppSettings: ObservableObject {
         case invertList
         case keepAwake
         case scroll
+        case script
     }
 
     static let shared = AppSettings()
@@ -37,6 +38,8 @@ final class AppSettings: ObservableObject {
             DefaultsKeys.scrollReverseVertical: false,
             DefaultsKeys.scrollReverseHorizontal: false,
             DefaultsKeys.scrollBlacklist: [String](),
+            DefaultsKeys.scriptEnabled: false,
+        DefaultsKeys.scriptCustomPath: "",
         ])
         enabled = defaults.bool(forKey: DefaultsKeys.enabled)
         delayMilliseconds = defaults.integer(forKey: DefaultsKeys.delay)
@@ -51,6 +54,8 @@ final class AppSettings: ObservableObject {
         scrollReverseVertical = defaults.bool(forKey: DefaultsKeys.scrollReverseVertical)
         scrollReverseHorizontal = defaults.bool(forKey: DefaultsKeys.scrollReverseHorizontal)
         scrollBlacklist = defaults.stringArray(forKey: DefaultsKeys.scrollBlacklist) ?? []
+        scriptEnabled = defaults.bool(forKey: DefaultsKeys.scriptEnabled)
+        scriptCustomPath = defaults.string(forKey: DefaultsKeys.scriptCustomPath) ?? ""
     }
 
     /// Called on the main thread after any setting changes.
@@ -137,6 +142,19 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(scrollBlacklist, forKey: DefaultsKeys.scrollBlacklist); onChange?(.scroll) }
     }
 
+    // MARK: - Scripting
+
+    /// Master switch for the embedded Lua (Hammerspoon) runtime.
+    @Published var scriptEnabled: Bool {
+        didSet { defaults.set(scriptEnabled, forKey: DefaultsKeys.scriptEnabled); onChange?(.script) }
+    }
+
+    /// User-chosen scripts directory. Empty = default resolution
+    /// (~/.hammerspoon when present, else MeiMacPlus's own folder).
+    @Published var scriptCustomPath: String {
+        didSet { defaults.set(scriptCustomPath, forKey: DefaultsKeys.scriptCustomPath); onChange?(.script) }
+    }
+
     var delaySeconds: TimeInterval { TimeInterval(delayMilliseconds) / 1000 }
 
     static let minDelayMs = 200
@@ -162,5 +180,7 @@ final class AppSettings: ObservableObject {
         static let scrollReverseVertical = "scrollReverseVertical"
         static let scrollReverseHorizontal = "scrollReverseHorizontal"
         static let scrollBlacklist = "scrollBlacklist"
+        static let scriptEnabled = "scriptEnabled"
+        static let scriptCustomPath = "scriptCustomPath"
     }
 }

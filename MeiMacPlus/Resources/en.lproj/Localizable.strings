@@ -100,3 +100,34 @@
 "settings.launchAtLogin.footer" = "MeiMacPlus keeps running in the menu bar so both protections stay active.";
 "settings.scroll.section.behavior" = "Behavior";
 "settings.scroll.section.blacklist" = "Excluded Apps";
+
+/* Scripting (1.5) */
+"settings.section.script" = "Scripting";
+"settings.script.enable" = "Enable Lua scripting";
+"settings.script.footer" = "Runs a Hammerspoon-compatible Lua runtime inside MeiMacPlus. Your init.lua and Spoons load here; system permission prompts belong to MeiMacPlus.";
+"settings.script.section.files" = "Scripts";
+"settings.script.reveal" = "Reveal in Finder";
+"settings.script.console" = "Open Console…";
+"settings.script.reload" = "Reload Scripts";
+"settings.script.files.footer" = "Priority: chosen folder > ~/.hammerspoon (your Hammerspoon config, loaded as-is) > MeiMacPlus default. Not vendored: none — all 92 hs.* modules included.";
+"menubar.scriptConsole" = "Script Console…";
+"menubar.reloadScripts" = "Reload Scripts";
+"scriptconsole.title" = "Script Console";
+"scriptconsole.status.running" = "Runtime running";
+"scriptconsole.status.stopped" = "Runtime stopped";
+"scriptconsole.clear" = "Clear";
+"scriptconsole.run" = "Run";
+"scriptconsole.placeholder" = "hs.hotkey.bind({\"alt\", \"cmd\"}, \"y\", function() hs.notify.show(\"Hi\", \"\", \"from console\") end)";
+"script.conflict.title" = "Hammerspoon is also running";
+"script.conflict.body" = "Both apps register global shortcuts (hs.hotkey). Conflicting key combinations may fail to register. Quit Hammerspoon if its hotkeys misbehave.";
+
+"settings.script.choose" = "Choose Folder…";
+"settings.script.useDefault" = "Use Default";
+"settings.general.quick" = "Common Switches";
+"settings.general.quick.footer" = "Master switches for every feature; each tab below holds the detailed settings.";
+"settings.script.choose.message" = "Pick your scripts folder (press ⌘⇧. to show hidden folders)";
+"menubar.quitProtection" = "Quit Protection";
+"menubar.scripting" = "Lua Scripting";
+"menubar.scriptHelp" = "Scripting Help…";
+"settings.script.help" = "Help…";
+"scripthelp.title" = "Scripting Help";

@@ -70,6 +70,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E1000000000000000000000E /* MeiMacPlus */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E100000000000000000000033 /* Exceptions for "MeiMacPlus" folder in MeiMacPlus target */,
+			);
 			path = MeiMacPlus;
 			sourceTree = "<group>";
 		};
@@ -82,6 +85,17 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MeiMacPlusHelper;
 			sourceTree = "<group>";
+		};
+		E100000000000000000000033 /* Exceptions for "MeiMacPlus" folder in MeiMacPlus target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				MeiMacPlus.entitlements,
+				Source/Scripting/HSMJStubs.m,
+				Source/Scripting/Vendor/HSuicore.h,
+				Source/Scripting/Vendor/HSuicore.m,
+			);
+			target = E1000000000000000000000B /* MeiMacPlus */;
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -141,6 +155,7 @@
 				E10000000000000000000010 /* Frameworks */,
 				E10000000000000000000014 /* Resources */,
 				E10000000000000000000002A /* Copy Helper to LaunchDaemons */,
+				E100000000000000000000032 /* Vendor HS Runtime */,
 			);
 			buildRules = (
 			);
@@ -262,6 +277,24 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		E100000000000000000000032 /* Vendor HS Runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Vendor HS Runtime";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n# Vendor HS Runtime — embed the pinned Hammerspoon Lua runtime\n# (produced by scripts/fetch_hs_runtime.sh into build/hs-vendor) into the\n# app bundle, then give every vendored binary a fresh ad-hoc signature so\n# hardened runtime + library validation can load them. The final app\n# signature is applied by the usual codesign step afterwards.\nVENDOR_DIR=\"${SRCROOT}/build/hs-vendor\"\nAPP_CONTENTS=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}\"\n\nif [ ! -d \"${VENDOR_DIR}/LuaSkin.framework\" ]; then\n  echo \"error: ${VENDOR_DIR} is missing; run scripts/fetch_hs_runtime.sh first\" >&2\n  exit 1\nfi\n\nmkdir -p \"${APP_CONTENTS}/Frameworks/hs\" \"${APP_CONTENTS}/Resources/extensions\"\nditto \"${VENDOR_DIR}/LuaSkin.framework\" \"${APP_CONTENTS}/Frameworks/LuaSkin.framework\"\n/usr/bin/rsync -a --delete \"${VENDOR_DIR}/hs/\" \"${APP_CONTENTS}/Frameworks/hs/\"\n/usr/bin/rsync -a --delete \"${VENDOR_DIR}/extensions/\" \"${APP_CONTENTS}/Resources/extensions/\"\nditto \"${VENDOR_DIR}/setup.lua\" \"${VENDOR_DIR}/docs.json\" \"${VENDOR_DIR}/lua.json\" \"${APP_CONTENTS}/Resources/\"\nditto \"${VENDOR_DIR}/HSChooserWindow.nib\" \"${APP_CONTENTS}/Resources/HSChooserWindow.nib\"\nditto \"${VENDOR_DIR}/HSChooserWindow.nib\" \"${APP_CONTENTS}/Resources/HSChooserWindow.nib\"\n# timeout3 (hsminweb CGI) + man page (hs.ipc.cliInstall) + hs CLI (Frameworks/hs/hs)\ncp \"${VENDOR_DIR}/timeout3\" \"${APP_CONTENTS}/Resources/timeout3\"\nmkdir -p \"${APP_CONTENTS}/Resources/man\"\ncp \"${VENDOR_DIR}/man/hs.man\" \"${APP_CONTENTS}/Resources/man/hs.man\"\ncp \"${VENDOR_DIR}/hs-cli/hs\" \"${APP_CONTENTS}/Frameworks/hs/hs\"\nchmod +x \"${APP_CONTENTS}/Resources/timeout3\" \"${APP_CONTENTS}/Frameworks/hs/hs\"\ncodesign --force --sign - \"${APP_CONTENTS}/Frameworks/hs/hs\" >/dev/null\n\n# MeiHSRuntime.dylib: HSuicore (HSapplication/HSuielement/HSwindow AX\n# wrappers) + our MJ* stubs, built as a dynamic library so the hs.* dylibs\n# can flat-namespace-bind to its exports (executables do not export).\nTP=\"${VENDOR_DIR}/third-party\"\nTP_SOURCES=$( \\\n  find \"$TP/CocoaAsyncSocket/Source/GCD\" -maxdepth 1 -name '*.m'; \\\n  find \"$TP/SocketRocket/SocketRocket\" \\( -name '*.m' -o -name '*.mm' \\) -not -path '*Test*'; \\\n  find \"$TP/CocoaLumberjack/Sources/CocoaLumberjack\" -maxdepth 1 -name '*.m'; \\\n  find \"$TP/MIKMIDI/Source\" -maxdepth 1 -name '*.m'; \\\n  find \"$TP/ORSSerialPort/Source\" -maxdepth 1 -name '*.m'; \\\n  find \"$TP/CocoaHTTPServer/Core\" -name '*.m'; \\\n  find \"$TP/CocoaHTTPServer/Extensions\" -name '*.m'; \\\n  find \"$TP/ASCIImage/Core\" -maxdepth 1 -name '*.m' \\\n)\nTP_INCLUDES=$(for d in $(find \"$TP\" -name '*.h' -exec dirname {} \\; | sort -u); do printf -- '-I%s ' \"$d\"; done)\n# Umbrella-style includes (<Lib/X.h>): mirror each library's headers under\n# third-party/_inc/<Lib>/ so the frameworks' own #imports resolve verbatim.\nTP_INC=\"$TP/_inc\"\nmkdir -p \"$TP_INC/MIKMIDI\" \"$TP_INC/SocketRocket\" \"$TP_INC/CocoaLumberjack\"\nln -sf \"$TP\"/MIKMIDI/Source/*.h \"$TP_INC/MIKMIDI/\"\nln -sf \"$TP\"/SocketRocket/SocketRocket/*.h \"$TP_INC/SocketRocket/\"\nln -sf \"$TP\"/CocoaLumberjack/Sources/CocoaLumberjack/include/CocoaLumberjack/*.h \"$TP_INC/CocoaLumberjack/\"\n# Pin the ambiguous bare DDLog.h import (several vendored copies exist)\n# to the CocoaHTTPServer fork's own legacy header: it has the 2.x macros the\n# fork's sources expect. Ranked first via -I ordering below.\nln -sf \"$TP\"/CocoaHTTPServer/Vendor/CocoaLumberjack/DDLog.h \"$TP_INC/DDLog.h\"\n# Third-party sources provide the symbols hs.socket/.udp/.websocket/\n# .httpserver/.midi/.serial flat-bind to (upstream Podfile.lock versions).\nxcrun clang -dynamiclib -fobjc-arc -fmodules -arch \"${ARCHS}\" \\\n  -mmacosx-version-min=13.0 \\\n  -F \"${APP_CONTENTS}/Frameworks\" -framework LuaSkin \\\n  -I \"$TP_INC\" $TP_INCLUDES \\\n  -install_name @rpath/MeiHSRuntime.dylib \\\n  -o \"${APP_CONTENTS}/Frameworks/MeiHSRuntime.dylib\" \\\n  \"${SRCROOT}/MeiMacPlus/Source/Scripting/Vendor/HSuicore.m\" \\\n  \"${SRCROOT}/MeiMacPlus/Source/Scripting/HSMJStubs.m\" \\\n  $TP_SOURCES\ncodesign --force --sign - \"${APP_CONTENTS}/Frameworks/MeiHSRuntime.dylib\" >/dev/null\n\ncodesign --force --sign - \"${APP_CONTENTS}/Frameworks/LuaSkin.framework\" >/dev/null\nfind \"${APP_CONTENTS}/Frameworks/hs\" -name '*.dylib' -exec codesign --force --sign - {} \\; >/dev/null\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		E10000000000000000000012 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -337,7 +370,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -398,7 +431,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -421,7 +454,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -430,12 +463,20 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 MeiMacPlus. MIT License.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "MeiMacPlus sends a quit command to the frontmost app when you hold ⌘Q.";
+				CODE_SIGN_ENTITLEMENTS = MeiMacPlus/MeiMacPlus.entitlements;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/build/hs-vendor";
+				INFOPLIST_FILE = MeiMacPlus/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					LuaSkin,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.MeiMacPlus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -450,7 +491,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -459,12 +500,20 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 MeiMacPlus. MIT License.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "MeiMacPlus sends a quit command to the frontmost app when you hold ⌘Q.";
+				CODE_SIGN_ENTITLEMENTS = MeiMacPlus/MeiMacPlus.entitlements;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/build/hs-vendor";
+				INFOPLIST_FILE = MeiMacPlus/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					LuaSkin,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.MeiMacPlus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -478,10 +527,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.MeiMacPlusTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -495,10 +544,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.MeiMacPlusTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -512,10 +561,10 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.helper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -527,10 +576,10 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.4.0;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.meimacplus.helper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

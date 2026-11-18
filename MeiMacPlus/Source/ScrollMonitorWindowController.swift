@@ -19,6 +19,9 @@ final class ScrollMonitorWindowController: NSWindowController, NSWindowDelegate 
         window.title = L("scrollmonitor.title")
         window.contentView = NSHostingView(rootView: ScrollMonitorView(viewModel: viewModel))
         window.isReleasedWhenClosed = false
+        // Creating/destroying the keep-awake virtual display reconfigures
+        // screens; without these the system can relocate or hide the window.
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.center()
         let timer = Timer(timeInterval: 1.0 / 15.0, repeats: true) { _ in
             viewModel.refresh()

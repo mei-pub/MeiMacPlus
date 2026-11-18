@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<title>MeiMacPlus 脚本帮助 · Scripting Help</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font: -apple-system-body; margin: 0; background: var(--bg, #f5f5f7); }
+  header { position: sticky; top: 0; z-index: 9; background: rgba(250,250,252,.92); backdrop-filter: blur(12px);
+           border-bottom: 1px solid rgba(0,0,0,.08); padding: 10px 18px; display: flex; gap: 8px; align-items: center; }
+  .tab { padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+  .tab.active { background: #0a84ff; color: #fff; }
+  .tab:not(.active):hover { background: rgba(0,0,0,.06); }
+  .spacer { flex: 1; }
+  .ext { font-size: 13px; color: #0a84ff; text-decoration: none; padding: 6px 10px; }
+  main { padding: 22px 26px; max-width: 980px; margin: 0 auto; }
+  section { display: none; }
+  section.active { display: block; }
+  h1 { font-size: 24px; } h2 { font-size: 19px; margin-top: 28px; }
+  h3 { font-size: 15px; }
+  code, pre { font: 12px/1.55 "SF Mono", Menlo, monospace; background: rgba(120,120,128,.12);
+       border-radius: 6px; padding: 1px 5px; }
+  pre { display: block; padding: 12px 14px; overflow-x: auto; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  .card { background: var(--card, #fff); border-radius: 12px; padding: 4px 20px 14px; margin: 14px 0;
+          box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 12px; color: rgba(0,0,0,.5); padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.12); }
+  td { padding: 7px 10px; border-bottom: 1px solid rgba(0,0,0,.06); vertical-align: top; }
+  td.n { font-family: "SF Mono", Menlo, monospace; font-size: 12px; white-space: nowrap; color: #0a84ff; }
+  input[type=search] { width: 100%; max-width: 460px; padding: 9px 13px; border-radius: 9px; border: 1px solid rgba(0,0,0,.18);
+        font: -apple-system-body 14px; outline: none; }
+  .api-layout { display: grid; grid-template-columns: 250px 1fr; gap: 18px; margin-top: 14px; }
+  .api-list { max-height: 74vh; overflow: auto; background: var(--card,#fff); border-radius: 12px; padding: 6px; }
+  .api-item { padding: 6px 10px; border-radius: 7px; cursor: pointer; font: 12px "SF Mono", Menlo, monospace; }
+  .api-item:hover { background: rgba(0,0,0,.05); }
+  .api-item.sel { background: #0a84ff; color: #fff; }
+  .api-detail { max-height: 74vh; overflow: auto; }
+  .sig { font: 13px "SF Mono", Menlo, monospace; color: #0a84ff; margin: 14px 0 2px; }
+  .note { color: rgba(0,0,0,.55); font-size: 12px; }
+  .pill { display:inline-block; font-size:11px; padding:1px 8px; border-radius:99px; background:rgba(10,132,255,.14); color:#0a84ff; margin-left:6px;}
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1c1c1e; --card:#2a2a2d; }
+    header { background: rgba(30,30,32,.92); border-bottom-color: rgba(255,255,255,.1); }
+    th { color: rgba(255,255,255,.5); } td { border-bottom-color: rgba(255,255,255,.08); }
+    .note { color: rgba(255,255,255,.55); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="tab active" data-t="start">入门 Guide</div>
+  <div class="tab" data-t="mods">模块 Modules</div>
+  <div class="tab" data-t="api">API 检索 API</div>
+  <div class="spacer"></div>
+  <a class="ext" href="https://www.hammerspoon.org/docs/">官方文档 Docs ↗</a>
+  <a class="ext" href="https://www.hammerspoon.org/go/">入门教程 Tutorial ↗</a>
+</header>
+<main>
+
+<section id="start" class="active">
+  <div class="cols">
+    <div>
+      <h1>脚本 · Scripting</h1>
+      <div class="card">
+        <p><b>MeiMacPlus 内嵌了 Hammerspoon 兼容运行时</b>（官方 1.1.1，92 个原生模块全部可用）。你的
+        <code>init.lua</code>、Spoons、社区脚本无需修改即可运行。</p>
+        <h3>脚本目录（优先级从高到低）</h3>
+        <p>① 设置里自选的目录 &nbsp;② <code>~/.hammerspoon</code>（存在即沿用，Hammerspoon 老用户零迁移）&nbsp;③ MeiMacPlus 默认目录（首次开启会生成示例）。</p>
+        <h3>试一下</h3>
+<pre>-- ⌥⌘Y 弹通知
+hs.hotkey.bind({"alt","cmd"}, "y", function()
+  hs.notify.show("MeiMacPlus", "Hello", "from Lua")
+end)
+-- 前窗口靠左半屏
+hs.hotkey.bind({"ctrl","alt"}, "left", function()
+  local w = hs.window.focusedWindow()
+  if w then w:moveToUnit("[0,0,0.5,1]") end
+end)</pre>
+        <h3>权限提示</h3>
+        <p class="note">脚本触发的系统权限（辅助功能/屏幕录制/摄像头等）以 MeiMacPlus 名义申请，授权一次长期有效。</p>
+        <h3>与官方 Hammerspoon 的差异</h3>
+        <p class="note">有意不内置：Sparkle 自动更新、Sentry 崩溃上报；<code>hs.console</code> 的窗口级透明度/背景色未生效（颜色/字体已生效）。</p>
+        <p class="note">外部通道：AppleScript（<code>hs.allowAppleScript(true)</code> 后
+        <code>osascript -e 'tell app "MeiMacPlus" to execute lua code "…"</code>）、
+        服务菜单"Send to MeiMacPlus"、快捷指令"Run Lua in MeiMacPlus"、
+        <code>hs.ipc.cliInstall()</code> 安装终端 <code>hs</code> 命令。</p>
+      </div>
+    </div>
+    <div lang="en">
+      <h1>Scripting</h1>
+      <div class="card">
+        <p><b>MeiMacPlus embeds the Hammerspoon runtime</b> (official 1.1.1 — all 92 native modules included).
+        Your <code>init.lua</code>, Spoons and community scripts run unmodified.</p>
+        <h3>Script directory (priority order)</h3>
+        <p>1) the folder chosen in Settings · 2) <code>~/.hammerspoon</code> (reused as-is when present) ·
+        3) MeiMacPlus's default (seeded with a starter script on first enable).</p>
+        <h3>Try it</h3>
+<pre>hs.hotkey.bind({"alt","cmd"}, "y", function()
+  hs.notify.show("MeiMacPlus", "Hello", "from Lua")
+end)</pre>
+        <h3>Permissions</h3>
+        <p class="note">System prompts triggered by scripts (Accessibility / Screen Recording / Camera …) are
+        requested by MeiMacPlus; grants persist across launches.</p>
+        <h3>Differences vs. upstream</h3>
+        <p class="note">Deliberately excluded: Sparkle auto-update, Sentry crash reporting; window-level
+        alpha/background of <code>hs.console</code> (colors &amp; font do apply).</p>
+        <p class="note">External channels: AppleScript (after <code>hs.allowAppleScript(true)</code>), the
+        "Send to MeiMacPlus" service, the Shortcuts action "Run Lua in MeiMacPlus", and the
+        <code>hs</code> CLI via <code>hs.ipc.cliInstall()</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mods">
+  <h1>模块总览 · Modules</h1>
+  <input type="search" id="modq" placeholder="搜索 / search…">
+  <div class="card">
+    <table><thead><tr><th>Module</th><th>中文</th><th>English</th></tr></thead>
+    <tbody id="modtable"></tbody></table>
+  </div>
+</section>
+
+<section id="api">
+  <h1>API 检索 · API Reference</h1>
+  <p class="note">数据来自内置的官方 docs.json（严格对应本机运行时版本）。
+  Data from the bundled official docs.json — exactly matches the embedded runtime.</p>
+  <input type="search" id="apiq" placeholder="搜索函数/方法 / search def or description…">
+  <div class="api-layout">
+    <div class="api-list" id="apilist"></div>
+    <div class="api-detail card" id="apidetail">← 选择模块 / pick a module</div>
+  </div>
+</section>
+
+</main>
+<script>
+const ZH = {
+ "hs": "核心命名空间 / Core namespace",
+ "hs.alert": "屏幕提示浮窗 / On-screen alert panels",
+ "hs.appfinder": "按标题/路径查找应用 / Find apps by title or path",
+ "hs.applescript": "执行 AppleScript / Execute AppleScript",
+ "hs.application": "应用查询与控制 / Inspect and control applications",
+ "hs.application.watcher": "应用启停监听 / Watch app launch & quit",
+ "hs.audiodevice": "音频设备管理 / Audio device management",
+ "hs.audiodevice.datasource": "音频数据源 / Audio data sources",
+ "hs.audiodevice.watcher": "音频设备变化监听 / Watch audio device changes",
+ "hs.axuielement": "底层 AXUIElement 访问 / Low-level accessibility elements",
+ "hs.axuielement.axtextmarker": "AX 文本标记 / AX text markers",
+ "hs.axuielement.observer": "AX 元素观察器 / AX element observers",
+ "hs.base64": "Base64 编解码 / Base64 encode & decode",
+ "hs.battery": "电池状态 / Battery status",
+ "hs.battery.watcher": "电池变化监听 / Watch battery changes",
+ "hs.bonjour": "Bonjour 服务发现 / Bonjour service discovery",
+ "hs.bonjour.service": "Bonjour 服务 / Bonjour services",
+ "hs.brightness": "屏幕亮度调节 / Screen brightness",
+ "hs.caffeinate": "系统防休眠断言 / Power-management assertions",
+ "hs.caffeinate.watcher": "休眠状态监听 / Watch sleep & wake events",
+ "hs.camera": "摄像头绑定视图 / Camera-bound views",
+ "hs.canvas": "矢量画布 / Vector canvas drawing",
+ "hs.canvas.matrix": "画布矩阵变换 / Canvas matrix transforms",
+ "hs.chooser": "快捷选择面板（类 Spotlight）/ Quick-select panel",
+ "hs.console": "控制台外观与行为 / Console appearance & behavior",
+ "hs.crash": "崩溃信息 / Crash reporting hooks (stubbed off)",
+ "hs.deezer": "Deezer 音乐控制 / Deezer control",
+ "hs.dialog": "系统对话框 / System dialogs & color picker",
+ "hs.dialog.color": "颜色选择器 / Color picker",
+ "hs.distributednotifications": "分布式通知 / Distributed notifications",
+ "hs.doc": "内嵌 API 文档 / Built-in API docs",
+ "hs.doc.builder": "文档生成 / Doc builder",
+ "hs.doc.hsdocs": "文档浏览器 / Doc browser",
+ "hs.doc.markdown": "Markdown 渲染 / Markdown rendering",
+ "hs.dockicon": "Dock 图标控制 / Dock icon control",
+ "hs.drawing": "图形绘制（canvas 旧接口）/ Legacy drawing",
+ "hs.drawing.color": "颜色工具 / Color utilities",
+ "hs.eventtap": "事件拦截（键盘/鼠标）/ Intercept keyboard & mouse events",
+ "hs.eventtap.event": "事件对象 / Event objects",
+ "hs.expose": "窗口缩略全景 / Window expose overview",
+ "hs.fnutils": "函数式工具 / Functional utilities",
+ "hs.fs": "文件系统 / Filesystem access",
+ "hs.fs.volume": "卷挂载监听 / Watch volume mounts",
+ "hs.fs.xattr": "扩展属性 / Extended attributes",
+ "hs.geometry": "几何运算 / Geometry (point/size/rect)",
+ "hs.grid": "窗口网格布局 / Snap windows to a grid",
+ "hs.hash": "哈希摘要 / Hash digests (MD5/SHA…)",
+ "hs.hid": "HID 设备事件 / HID device events",
+ "hs.hid.led": "键盘 LED 控制 / Keyboard LED control",
+ "hs.hints": "窗口跳转提示 / Window jump hints",
+ "hs.host": "主机信息 / Host info (uptime/UUID/locale…)",
+ "hs.host.locale": "区域设置 / Locale info",
+ "hs.hotkey": "全局快捷键 / Global hotkeys",
+ "hs.hotkey.modal": "模态快捷键组 / Modal hotkey sets",
+ "hs.http": "HTTP 客户端 / HTTP client",
+ "hs.httpserver": "本地 HTTP 服务器 / Local HTTP server",
+ "hs.httpserver.hsminweb": "轻量 Web 框架 / Minimal web framework",
+ "hs.httpserver.hsminweb.cgilua": "CGI Lua 支持 / CGI Lua support",
+ "hs.httpserver.hsminweb.cgilua.lp": "Lua 页面模板 / Lua pages",
+ "hs.httpserver.hsminweb.cgilua.urlcode": "URL 编解码 / URL encoding helpers",
+ "hs.image": "图像对象 / Image objects",
+ "hs.inspect": "Lua 值查看 / Pretty-print Lua values",
+ "hs.ipc": "hs 命令行 / Command-line IPC (cliInstall)",
+ "hs.itunes": "iTunes/音乐控制 / iTunes control",
+ "hs.javascript": "JavaScript 执行 / JavaScript execution",
+ "hs.json": "JSON 编解码 / JSON encode & decode",
+ "hs.keycodes": "键码与键盘布局 / Keycodes & layouts",
+ "hs.layout": "窗口布局定义 / Window layout definitions",
+ "hs.location": "定位 / Location (needs permission)",
+ "hs.location.geocoder": "地理编码 / Geocoding",
+ "hs.logger": "日志 / Logging",
+ "hs.math": "数学扩展 / Math extensions",
+ "hs.menubar": "自定义菜单栏项 / Custom menu bar items",
+ "hs.messages": "消息发送（iMessage）/ Messages sending",
+ "hs.midi": "MIDI 设备 / MIDI devices",
+ "hs.milight": "MiLight 灯控 / MiLight lights",
+ "hs.mjomatic": "平铺管理（i3 风格）/ Tiling (i3-style)",
+ "hs.mouse": "鼠标位置与模拟 / Mouse position & simulation",
+ "hs.network": "网络工具集 / Network utilities",
+ "hs.network.configuration": "网络配置 / Network configuration",
+ "hs.network.host": "主机名解析 / Host resolution",
+ "hs.network.ping": "Ping / ICMP ping",
+ "hs.network.ping.echoRequest": "Echo 请求 / Echo requests",
+ "hs.network.reachability": "可达性 / Reachability",
+ "hs.noises": "麦克风声音触发 / Microphone sound triggers",
+ "hs.notify": "系统通知 / User notifications",
+ "hs.osascript": "AppleScript/JavaScript 执行 / Run AppleScript & JXA",
+ "hs.pasteboard": "剪贴板 / Pasteboard",
+ "hs.pasteboard.watcher": "剪贴板监听 / Watch pasteboard",
+ "hs.pathwatcher": "路径监视 / Watch files & folders",
+ "hs.plist": "plist 读写 / Property lists",
+ "hs.razer": "雷蛇设备 / Razer devices",
+ "hs.redshift": "色温调节 / Color temperature (f.lux-style)",
+ "hs.screen": "屏幕信息与控制 / Screens",
+ "hs.screen.watcher": "屏幕变化监听 / Watch screen changes",
+ "hs.serial": "串口 / Serial ports",
+ "hs.settings": "持久化设置 / Persistent settings",
+ "hs.sharing": "系统分享面板 / Share services",
+ "hs.shortcuts": "快捷指令 / Shortcuts interop",
+ "hs.socket": "TCP socket",
+ "hs.socket.udp": "UDP socket",
+ "hs.sound": "系统声音 / Sound playback",
+ "hs.spaces": "Space 管理 / Spaces",
+ "hs.spaces.watcher": "Space 变化监听 / Watch space changes",
+ "hs.speech": "语音合成与识别 / Speech synthesis & recognition",
+ "hs.speech.listener": "语音指令监听 / Speech listener",
+ "hs.spoons": "Spoon 加载器 / Spoon loader",
+ "hs.spotify": "Spotify 控制 / Spotify control",
+ "hs.spotlight": "Spotlight 查询 / Spotlight queries",
+ "hs.spotlight.group": "结果分组 / Result groups",
+ "hs.spotlight.item": "结果条目 / Result items",
+ "hs.sqlite3": "SQLite 数据库 / SQLite database",
+ "hs.streamdeck": "Stream Deck 控制 / Stream Deck",
+ "hs.styledtext": "富文本 / Styled text",
+ "hs.tabs": "Chrome/Safari 标签页 / Browser tabs",
+ "hs.tangent": "Tangent 面板 / Tangent panels",
+ "hs.task": "外部进程 / Run external processes",
+ "hs.timer": "定时器 / Timers",
+ "hs.timer.delayed": "延迟执行队列 / Delayed call queue",
+ "hs.uielement": "UI 元素（AX）/ UI elements",
+ "hs.uielement.watcher": "UI 元素监听 / UI element watchers",
+ "hs.urlevent": "URL 事件 / URL event handling",
+ "hs.usb": "USB 设备 / USB devices",
+ "hs.usb.watcher": "USB 变化监听 / Watch USB changes",
+ "hs.utf8": "UTF-8 工具 / UTF-8 utilities",
+ "hs.vox": "VOX 播放器 / VOX player",
+ "hs.watchable": "表级自动同步 / Watchable tables",
+ "hs.websocket": "WebSocket 客户端 / WebSocket client",
+ "hs.webview": "内嵌浏览器视图 / Embedded browser views",
+ "hs.webview.datastore": "Web 数据存储 / Web data stores",
+ "hs.webview.toolbar": "Web 工具栏 / Web toolbars",
+ "hs.webview.usercontent": "用户内容通信 / User-content messaging",
+ "hs.wifi": "Wi-Fi 信息 / Wi-Fi info",
+ "hs.wifi.watcher": "Wi-Fi 变化监听 / Watch Wi-Fi changes",
+ "hs.window": "窗口管理 / Window management",
+ "hs.window.filter": "窗口过滤流 / Window filters",
+ "hs.window.highlight": "窗口高亮 / Highlight windows",
+ "hs.window.layout": "窗口自动布局 / Auto window layouts",
+ "hs.window.switcher": "窗口切换器 / Window switcher",
+ "hs.window.tiling": "窗口平铺 / Window tiling"
+};
+const $ = s => document.querySelector(s);
+
+// tabs
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === t.dataset.t));
+});
+
+// fetch bundled docs
+let DOCS = [];
+fetch('docs.json').then(r => r.json()).then(d => {
+  DOCS = d;
+  renderApiList('');
+});
+
+// ---- modules table ----
+function renderMods(q) {
+  q = q.toLowerCase();
+  const tb = $('#modtable'); tb.innerHTML = '';
+  for (const x of DOCS) {
+    const zh = ZH[x.name] || '';
+    const en = (x.desc || '').split('\n')[0];
+    if (q && !(x.name + zh + en).toLowerCase().includes(q)) continue;
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td'); td1.className = 'n'; td1.textContent = x.name;
+    const td2 = document.createElement('td'); td2.textContent = zh.split(' /')[0] || '—';
+    const td3 = document.createElement('td'); td3.textContent = en;
+    tr.append(td1, td2, td3); tb.append(tr);
+  }
+}
+$('#modq').oninput = e => renderMods(e.target.value);
+const _origRenderMods = renderMods;
+
+// ---- api list/detail ----
+function renderApiList(q) {
+  q = q.toLowerCase();
+  const list = $('#apilist'); list.innerHTML = '';
+  const hits = DOCS.filter(m => q
+    ? JSON.stringify(m).toLowerCase().includes(q)
+    : true).slice(0, q ? 60 : 400);
+  for (const m of hits) {
+    const div = document.createElement('div');
+    div.className = 'api-item'; div.textContent = m.name;
+    div.onclick = () => { renderApiDetail(m); document.querySelectorAll('.api-item')
+      .forEach(x => x.classList.toggle('sel', x === div)); };
+    list.append(div);
+  }
+  if (hits.length) renderApiDetail(hits[0]);
+  else $('#apidetail').textContent = '无结果 / no match';
+}
+function esc(s) { return String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function renderApiDetail(m) {
+  const cats = ['Function','Method','Constructor','Constant','Command','Field','Variable','Deprecated'];
+  let html = `<h2>${esc(m.name)}</h2>`;
+  if (ZH[m.name]) html += `<p>${esc(ZH[m.name])}</p>`;
+  const doc = (m.doc || m.desc || '').trim();
+  if (doc) html += `<pre>${esc(doc)}</pre>`;
+  for (const c of cats) {
+    const items = m[c] || [];
+    if (!items.length) continue;
+    html += `<h3>${c}${c !== 'Function' ? '' : ''} <span class="pill">${items.length}</span></h3>`;
+    for (const it of items) {
+      html += `<div class="sig">${esc(it.def || it.name || '')}</div>`;
+      html += `<div>${esc(it.desc || '')}</div>`;
+      if (it.parameters) html += `<div class="note">${esc(JSON.stringify(it.parameters))}</div>`;
+    }
+  }
+  const mod = m.name.split('.').slice(0, 2).join('.');
+  html += `<p class="note"><a href="https://www.hammerspoon.org/docs/${mod}.html" style="color:#0a84ff">官方页面 ↗</a></p>`;
+  $('#apidetail').innerHTML = html;
+}
+$('#apiq').oninput = e => renderApiList(e.target.value);
+
+// initial module table once docs land
+fetch('docs.json').then(r => r.json()).then(d => { renderMods(''); });
+</script>
+</body>
+</html>

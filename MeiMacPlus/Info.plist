@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Mirrors the keys Hammerspoon's own Info.plist needs for the embedded
+	     runtime to behave identically; see THIRD_PARTY_LICENSES.md. -->
+
+	<!-- User Lua scripts may talk to any endpoint; without this ATS blocks
+	     plain http:// requests (hs.http against http:// URLs). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+
+	<!-- Watchers/timers must not be throttled by App Nap. -->
+	<key>NSAppSleepDisabled</key>
+	<true/>
+
+	<!-- TCC usage descriptions: without these the corresponding hs.* modules
+	     are denied outright instead of prompting. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Some Hammerspoon-compatible scripts require access to the camera.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Some Hammerspoon-compatible scripts (such as hs.noises) require access to the microphone.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Some Hammerspoon-compatible scripts (such as hs.location) require access to your location.</string>
+
+	<!-- AppleScript: `tell application "MeiMacPlus" to execute lua code "…"`
+	     (gated by hs.allowAppleScript, like upstream). -->
+	<key>NSAppleScriptEnabled</key>
+	<true/>
+	<key>OSAScriptingDefinition</key>
+	<string>MeiMacPlus</string>
+
+	<!-- Services menu: send selected text to hs.textDroppedToDockIconCallback. -->
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Send to MeiMacPlus</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>processDockIconDraggedText</string>
+			<key>NSPortName</key>
+			<string>MeiMacPlus</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSStringPboardType</string>
+			</array>
+			<key>NSRequiredContext</key>
+			<dict>
+				<key>NSTextContent</key>
+				<string>Plain</string>
+			</dict>
+		</dict>
+	</array>
+
+	<!-- hs.webview BrowserDocument: let users open html/text files with the
+	     embedded webview (mirrors upstream's document types). -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>HTML document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.html</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Plain text document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.plain-text</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- URL schemes for hs.urlevent. "hammerspoon" keeps existing scripts
+	     (hs.urlevent.bindURL("hammerspoon", ...)) working verbatim;
+	     "meimacplus" is our own scheme for scripts that want to address
+	     MeiMacPlus specifically. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>org.hammerspoon.Hammerspoon</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>hammerspoon</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.meimacplus.MeiMacPlus</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>meimacplus</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

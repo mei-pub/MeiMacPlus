@@ -20,6 +20,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.contentView = NSHostingView(rootView: SettingsView())
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 560, height: 460)
+        // Creating/destroying the keep-awake virtual display reconfigures
+        // screens; without these the system can relocate or hide the window.
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         super.init(window: window)
         window.delegate = self
         window.center()
@@ -40,6 +43,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     case holdToQuit
     case keepAwake
     case scroll
+    case script
 
     var id: String { rawValue }
 
@@ -49,6 +53,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .holdToQuit: return L("settings.section.hold")
         case .keepAwake: return L("settings.section.keepAwake")
         case .scroll: return L("settings.section.scroll")
+        case .script: return L("settings.section.script")
         }
     }
 
@@ -58,6 +63,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .holdToQuit: return "keyboard"
         case .keepAwake: return "cup.and.saucer"
         case .scroll: return "scroll"
+        case .script: return "chevron.left.forwardslash.chevron.right"
         }
     }
 }
@@ -85,6 +91,7 @@ struct SettingsView: View {
         case .holdToQuit: HoldToQuitSettingsPane()
         case .keepAwake: KeepAwakeSettingsPane()
         case .scroll: ScrollSettingsPane()
+        case .script: ScriptSettingsPane()
         }
     }
 }
@@ -164,10 +171,13 @@ private struct GeneralSettingsPane: View {
 
     var body: some View {
         SettingsPane {
-            SettingsCard {
+            SettingsCard(L("settings.general.quick")) {
                 Toggle(L("settings.enable"), isOn: $settings.enabled)
+                Toggle(L("settings.keepAwake"), isOn: $settings.keepAwakeOnLidClose)
+                Toggle(L("settings.scroll.enable"), isOn: $settings.scrollEnabled)
+                Toggle(L("settings.script.enable"), isOn: $settings.scriptEnabled)
             } footer: {
-                Text(L("settings.enable.footer"))
+                Text(L("settings.general.quick.footer"))
             }
             SettingsCard {
                 Toggle(L("settings.launchAtLogin"), isOn: $launchAtLogin)
@@ -192,6 +202,11 @@ private struct HoldToQuitSettingsPane: View {
 
     var body: some View {
         SettingsPane {
+            SettingsCard {
+                Toggle(L("settings.enable"), isOn: $settings.enabled)
+            } footer: {
+                Text(L("settings.enable.footer"))
+            }
             SettingsCard(L("settings.section.hold")) {
                 HStack {
                     Slider(
@@ -408,6 +423,86 @@ private struct ScrollSettingsPane: View {
             settings.scrollBlacklist.sort()
         }
         manualScrollBlacklistID = ""
+    }
+}
+
+// MARK: - Scripting
+
+private struct ScriptSettingsPane: View {
+    @ObservedObject private var settings = AppSettings.shared
+
+    var body: some View {
+        SettingsPane {
+            SettingsCard {
+                Toggle(L("settings.script.enable"), isOn: $settings.scriptEnabled)
+            } footer: {
+                Text(L("settings.script.footer"))
+            }
+
+            if settings.scriptEnabled {
+                SettingsCard(L("settings.script.section.files")) {
+                    ScriptDirectoryPicker()
+                    HStack {
+                        Button(L("settings.script.console")) {
+                            (NSApp.delegate as? AppDelegate)?.showScriptConsole()
+                        }
+                        Button(L("settings.script.reload")) {
+                            (NSApp.delegate as? AppDelegate)?.reloadScripts()
+                        }
+                        Button(L("settings.script.help")) {
+                            (NSApp.delegate as? AppDelegate)?.showScriptHelp()
+                        }
+                        Spacer()
+                    }
+                } footer: {
+                    Text(L("settings.script.files.footer"))
+                }
+            }
+        }
+    }
+}
+
+/// Scripts-directory display + chooser. An empty custom path means the
+/// default resolution (~/.hammerspoon when present, else our own folder).
+private struct ScriptDirectoryPicker: View {
+    @ObservedObject private var settings = AppSettings.shared
+    @State private var isChoosing = false
+
+    private var activeDirectory: String {
+        ScriptConfig.prepareConfigDir(customPath: settings.scriptCustomPath).path
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(activeDirectory)
+                .font(.system(size: 11, design: .monospaced))
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .textSelection(.enabled)
+                .foregroundStyle(.secondary)
+            HStack {
+                Button(L("settings.script.choose")) { isChoosing = true }
+                if !settings.scriptCustomPath.isEmpty {
+                    Button(L("settings.script.useDefault")) {
+                        settings.scriptCustomPath = ""
+                    }
+                }
+                Spacer()
+                Button(L("settings.script.reveal")) {
+                    ScriptConfig.ensureDirectory()
+                    NSWorkspace.shared.activateFileViewerSelecting([ScriptConfig.configDir])
+                }
+            }
+        }
+        .fileImporter(
+            isPresented: $isChoosing,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            if let url = try? result.get().first {
+                settings.scriptCustomPath = url.path
+            }
+        }
     }
 }
 
