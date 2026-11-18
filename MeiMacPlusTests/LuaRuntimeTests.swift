@@ -308,6 +308,10 @@ final class ScriptHelpAssetsTests: XCTestCase {
         let dataPath = resources.appendingPathComponent("ScriptHelp.data.js").path
         XCTAssertTrue(FileManager.default.fileExists(atPath: dataPath),
                       "help data missing — Modules/API tabs would be empty")
+        // Spoons tab content is baked into the page.
+        let html = (try? String(contentsOf: resources.appendingPathComponent("ScriptHelp.index.html"), encoding: .utf8)) ?? ""
+        XCTAssertTrue(html.contains("SpoonInstall"), "Spoons tab data missing")
+        XCTAssertTrue(html.contains("hammerspoon.org/docs/"), "module doc links missing")
         if let head = try? String(contentsOfFile: dataPath, encoding: .utf8).prefix(30) {
             XCTAssertTrue(head.hasPrefix("window.__DOCS__="), "data.js has no assignment prefix")
         }
