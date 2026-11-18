@@ -159,3 +159,4 @@
 "settings.spoons.trigger.minutes" = "分钟";
 "settings.spoons.trigger.autoHint" = "启用的 Spoon 以自身默认行为运行";
 "settings.spoons.col.params" = "参数";
+"settings.spoons.trigger.externalHint" = "需在 init.lua 配置（见使用说明列）";

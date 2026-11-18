@@ -3,6 +3,7 @@ import SwiftUI
 /// Usage text for one spoon, read from the assembler's spoon_usage.json.
 struct SpoonUsage: Codable, Equatable {
     var how: String?
+    var triggers: [String]?
     var trigger: String?
     var text: String?
     var zh: String?
@@ -69,21 +70,9 @@ struct SpoonsManagerCard: View {
                     usageText(for: spoon)
                 }
 
-                TableColumn(L("settings.spoons.trigger.type")) { spoon in
-                    Picker("", selection: typeBinding(for: spoon.name)) {
-                        Text(L("settings.spoons.trigger.auto")).tag("auto")
-                        Text(L("settings.spoons.trigger.hotkey")).tag("hotkey")
-                        Text(L("settings.spoons.trigger.interval")).tag("interval")
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-                .width(190)
-
                 TableColumn(L("settings.spoons.col.params")) { spoon in
                     paramsCell(for: spoon)
                 }
-                .width(280)
 
                 TableColumn(L("settings.spoons.col.toggle")) { spoon in
                     Toggle("", isOn: binding(for: spoon.name))
@@ -103,24 +92,13 @@ struct SpoonsManagerCard: View {
         }
     }
 
-    /// 触发方式 column: segmented picker bound straight to settings.
-    private func typeBinding(for name: String) -> Binding<String> {
-        Binding(
-            get: { settings.spoonsTriggers[name]?.type ?? "auto" },
-            set: { t in
-                var cfg = settings.spoonsTriggers[name] ?? SpoonTrigger()
-                cfg.type = t
-                if t == "hotkey", cfg.mods.isEmpty, cfg.key.isEmpty {
-                    cfg.mods = ["cmd", "alt"]; cfg.key = "y"
-                }
-                settings.spoonsTriggers[name] = cfg
-            })
-    }
-
-    /// 参数 column: hotkey modifiers+key, or interval minutes.
+    /// 参数 column: components follow the spoon's DECLARED trigger
+    /// capability — hotkey-capable spoons get modifiers+key, others get a
+    /// hint (auto / needs init.lua configuration).
     @ViewBuilder
     private func paramsCell(for spoon: SpoonSummary) -> some View {
-        let type = settings.spoonsTriggers[spoon.name]?.type ?? "auto"
+        let declared = usage(for: spoon.name)?.triggers ?? ["external"]
+        let type = declared.contains("hotkey") ? "hotkey" : "auto"
         if type == "hotkey" {
             HStack(spacing: 6) {
                 modToggle(spoon.name, "⌘", "cmd")
@@ -140,6 +118,11 @@ struct SpoonsManagerCard: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+        } else if declared.contains("external") {
+            Text(L("settings.spoons.trigger.externalHint"))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
         } else {
             Text(L("settings.spoons.trigger.autoHint"))
                 .font(.footnote)
