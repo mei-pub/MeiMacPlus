@@ -394,12 +394,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let configDir = ScriptConfig.prepareConfigDir(customPath: settings.scriptCustomPath)
 
-        // Bundled Spoons are made require-able through this path entry that
-        // the patched setup.lua appends to package.path (see fetch_hs_runtime.sh).
-        if let spoonsURL = Bundle.main.resourceURL?.appendingPathComponent("spoons") {
-            setenv("MEI_SPOONS_PATH", spoonsURL.path, 1)
-        }
-
         // A running runtime survives only if the resolved directory, enabled
         // spoon set AND trigger configs are all unchanged; any change restarts
         // the environment instead of silently keeping the old one.
@@ -476,13 +470,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !names.isEmpty else { return }
         var configs: [String] = []
         for name in names {
-            var parts = ["name = '\(name)'"]
-            if let t = triggers[name], t.type != "auto" {
-                parts.append("type = '\(t.type)'")
+            // The trigger type is declared by the spoon (spoon_usage.json);
+            // user settings supply only the parameters. bindHotkeys-capable
+            // spoons get their OFFICIAL mapping key (toggle/show/toggleShade…).
+            var mappingKey = ""
+            if let usage = SpoonUsageStore.usage(for: name),
+               usage.triggers?.contains("hotkey") == true,
+               let mk = usage.mappingKey, !mk.isEmpty {
+                mappingKey = mk
+            }
+            var parts = ["name = '\(name)'", "mappingKey = '\(mappingKey)'"]
+            if let t = triggers[name], t.type == "hotkey" {
                 let mods = t.mods.map { "'\($0)'" }.joined(separator: ",")
                 parts.append("mods = {\(mods)}")
                 parts.append("key = '\(t.key)'")
-                parts.append("minutes = \(t.minutes)")
             }
             configs.append("{ \(parts.joined(separator: ", ")) }")
         }
@@ -491,18 +492,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             "for _, cfg in ipairs(configs) do " +
             "local ok, sp = pcall(hs.loadSpoon, cfg.name) " +
             "if ok and sp then " +
-            "if sp.start then pcall(sp.start, sp) end " +
             "local function activate() " +
             "if sp.toggle then sp:toggle() " +
+            "elseif sp.toggleShow then sp:toggleShow() " +
             "elseif sp.show then sp:show() " +
             "elseif sp.run then sp:run() " +
-            "else print('-- spoon ' .. cfg.name .. ' has no toggle/show/run to trigger') end " +
+            "else print('-- spoon ' .. cfg.name .. ' has no activatable method') end " +
             "end " +
-            "if cfg.type == 'hotkey' and cfg.key ~= '' then " +
+            "if cfg.mappingKey ~= '' and sp.bindHotkeys and cfg.key ~= '' then " +
+            "local okb, errb = pcall(sp.bindHotkeys, sp, { [cfg.mappingKey] = { cfg.mods, cfg.key } }) " +
+            "if not okb then print('-- spoon ' .. cfg.name .. ' bindHotkeys failed: ' .. tostring(errb)) end " +
+            "elseif cfg.key ~= '' then " +
             "pcall(hs.hotkey.bind, cfg.mods, cfg.key, activate) " +
-            "elseif cfg.type == 'interval' then " +
-            "hs.timer.doEvery(cfg.minutes * 60, activate) " +
             "end " +
+            "if sp.start then pcall(sp.start, sp) end " +
             "else print('-- spoon ' .. cfg.name .. ' failed to load') end " +
             "end")
         sessionLog.notice("loaded \(names.count) spoon(s)")

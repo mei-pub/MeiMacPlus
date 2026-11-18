@@ -85,7 +85,8 @@
   "text": "启用后菜单栏出现咖啡杯图标：点一下防休眠开启（杯子满），再点恢复（杯子空）。可另配快捷键切换。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "toggle"
  },
  "Calendar": {
   "how": "auto",
@@ -133,7 +134,8 @@
   "text": "启用后绑定快捷键，点击屏幕任意位置取色，色值自动进剪贴板。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "show"
  },
  "Commander": {
   "how": "config",
@@ -181,7 +183,8 @@
   "text": "启用后绑定快捷键，弹出表情选择面板，选中即复制。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "toggle"
  },
  "EvernoteOpenAndTag": {
   "how": "config",
@@ -341,7 +344,8 @@
   "text": "启用后绑定快捷键（如 ⌥⌘M），按下静音/取消静音麦克风，屏幕提示状态；支持按住临时开麦模式。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "toggle"
  },
  "MiddleClickDragScroll": {
   "how": "auto",
@@ -493,7 +497,8 @@
   "text": "启用后绑定快捷键呼出命令条：输词即搜（网页/词典/应用/文件），插件扩展（类 Alfred）。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "show"
  },
  "SendToOmniFocus": {
   "how": "config",
@@ -509,7 +514,8 @@
   "text": "启用后绑定快捷键，一键盖黑整个屏幕（演示/隐私），再按还原。",
   "triggers": [
    "hotkey"
-  ]
+  ],
+  "mappingKey": "toggleShade"
  },
  "SleepCorners": {
   "how": "config",
@@ -548,8 +554,9 @@
   "trigger": "自定义快捷键",
   "text": "启用后绑定快捷键，屏幕显示优雅的时间流逝（翻页时钟）全屏视图。",
   "triggers": [
-   "hotkey"
-  ]
+   "external"
+  ],
+  "mappingKey": ""
  },
  "TimeMachineProgress": {
   "how": "auto",
