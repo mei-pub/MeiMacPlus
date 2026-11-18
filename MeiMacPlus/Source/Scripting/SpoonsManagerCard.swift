@@ -32,13 +32,7 @@ enum SpoonUsageStore {
 struct SpoonsManagerCard: View {
     @ObservedObject private var settings = AppSettings.shared
     @State private var filter = ""
-    @State private var selection: SpoonSummary.ID?
-    @State private var modCmd = false
-    @State private var modAlt = false
-    @State private var modCtrl = false
-    @State private var modShift = false
-    @State private var keyDraft = ""
-    @State private var minutesDraft = 5
+
 
     private var visible: [SpoonSummary] {
         SpoonCatalog.all.filter {
@@ -59,7 +53,7 @@ struct SpoonsManagerCard: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            Table(visible, selection: $selection) {
+            Table(visible) {
                 TableColumn(L("settings.spoons.col.name")) { spoon in
                     HStack(spacing: 4) {
                         Image(systemName: usageBadgeIcon(for: spoon.name))
@@ -69,142 +63,126 @@ struct SpoonsManagerCard: View {
                             .font(.system(size: 12, weight: .medium, design: .monospaced))
                     }
                 }
-                .width(180)
+                .width(160)
 
                 TableColumn(L("settings.spoons.col.usage")) { spoon in
                     usageText(for: spoon)
                 }
+
+                TableColumn(L("settings.spoons.trigger.type")) { spoon in
+                    Picker("", selection: typeBinding(for: spoon.name)) {
+                        Text(L("settings.spoons.trigger.auto")).tag("auto")
+                        Text(L("settings.spoons.trigger.hotkey")).tag("hotkey")
+                        Text(L("settings.spoons.trigger.interval")).tag("interval")
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+                .width(190)
+
+                TableColumn(L("settings.spoons.col.params")) { spoon in
+                    paramsCell(for: spoon)
+                }
+                .width(280)
 
                 TableColumn(L("settings.spoons.col.toggle")) { spoon in
                     Toggle("", isOn: binding(for: spoon.name))
                         .labelsHidden()
                         .toggleStyle(.switch)
                 }
-                .width(64)
+                .width(56)
             }
-            .frame(height: 280)
+            .frame(height: 300)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.primary.opacity(0.03))
             )
-            if let selected = visible.first(where: { $0.id == selection }) {
-                triggerConfigBar(selected)
-            }
             Text(L("settings.spoons.footer"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
     }
 
-    /// Per-spoon trigger editor: auto / hotkey / interval, applied live.
-    @ViewBuilder
-    private func triggerConfigBar(_ spoon: SpoonSummary) -> some View {
-        let trigger = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-        HStack(spacing: 10) {
-            Text(spoon.name)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-            Picker(L("settings.spoons.trigger.type"), selection: typeBinding(for: spoon)) {
-                Text(L("settings.spoons.trigger.auto")).tag("auto")
-                Text(L("settings.spoons.trigger.hotkey")).tag("hotkey")
-                Text(L("settings.spoons.trigger.interval")).tag("interval")
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 250)
+    /// 触发方式 column: segmented picker bound straight to settings.
+    private func typeBinding(for name: String) -> Binding<String> {
+        Binding(
+            get: { settings.spoonsTriggers[name]?.type ?? "auto" },
+            set: { t in
+                var cfg = settings.spoonsTriggers[name] ?? SpoonTrigger()
+                cfg.type = t
+                if t == "hotkey", cfg.mods.isEmpty, cfg.key.isEmpty {
+                    cfg.mods = ["cmd", "alt"]; cfg.key = "y"
+                }
+                settings.spoonsTriggers[name] = cfg
+            })
+    }
 
-            if trigger.type == "hotkey" {
-                HStack(spacing: 6) {
-                    Toggle("⌘", isOn: modBinding(for: spoon, mod: "cmd", draft: $modCmd)).toggleStyle(.checkbox)
-                    Toggle("⌥", isOn: modBinding(for: spoon, mod: "alt", draft: $modAlt)).toggleStyle(.checkbox)
-                    Toggle("⌃", isOn: modBinding(for: spoon, mod: "ctrl", draft: $modCtrl)).toggleStyle(.checkbox)
-                    Toggle("⇧", isOn: modBinding(for: spoon, mod: "shift", draft: $modShift)).toggleStyle(.checkbox)
-                    TextField("key", text: keyBinding(for: spoon))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
-                }
-            } else if trigger.type == "interval" {
-                HStack(spacing: 6) {
-                    TextField("", value: minutesBinding(for: spoon), format: .number)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 60)
-                    Text(L("settings.spoons.trigger.minutes"))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Text(L("settings.spoons.trigger.autoHint"))
+    /// 参数 column: hotkey modifiers+key, or interval minutes.
+    @ViewBuilder
+    private func paramsCell(for spoon: SpoonSummary) -> some View {
+        let type = settings.spoonsTriggers[spoon.name]?.type ?? "auto"
+        if type == "hotkey" {
+            HStack(spacing: 6) {
+                modToggle(spoon.name, "⌘", "cmd")
+                modToggle(spoon.name, "⌥", "alt")
+                modToggle(spoon.name, "⌃", "ctrl")
+                modToggle(spoon.name, "⇧", "shift")
+                TextField("key", text: keyBinding(for: spoon.name))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 70)
+            }
+        } else if type == "interval" {
+            HStack(spacing: 6) {
+                TextField("", value: minutesBinding(for: spoon.name), format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 50)
+                Text(L("settings.spoons.trigger.minutes"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            Spacer()
-        }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.05)))
-        .onAppear { syncDrafts(spoon) }
-        .onChange(of: selection) { _ in
-            if let spoon = visible.first(where: { $0.id == selection }) {
-                syncDrafts(spoon)
-            }
+        } else {
+            Text(L("settings.spoons.trigger.autoHint"))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
     }
 
-    private func syncDrafts(_ spoon: SpoonSummary) {
-        let t = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-        modCmd = t.mods.contains("cmd")
-        modAlt = t.mods.contains("alt")
-        modCtrl = t.mods.contains("ctrl")
-        modShift = t.mods.contains("shift")
-        keyDraft = t.key
-        minutesDraft = t.minutes
-    }
-
-    private func typeBinding(for spoon: SpoonSummary) -> Binding<String> {
-        Binding(
-            get: { settings.spoonsTriggers[spoon.name]?.type ?? "auto" },
-            set: { newType in
-                var t = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-                t.type = newType
-                if newType == "hotkey", t.mods.isEmpty {
-                    t.mods = ["cmd", "alt"]; t.key = keyDraft.isEmpty ? "y" : keyDraft
-                }
-                settings.spoonsTriggers[spoon.name] = t
-            })
-    }
-
-    private func modBinding(for spoon: SpoonSummary, mod: String, draft: Binding<Bool>) -> Binding<Bool> {
-        Binding(
-            get: { draft.wrappedValue },
+    private func modToggle(_ name: String, _ label: String, _ mod: String) -> some View {
+        let binding = Binding(
+            get: { settings.spoonsTriggers[name]?.mods.contains(mod) ?? false },
             set: { on in
-                draft.wrappedValue = on
-                var t = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-                t.type = "hotkey"
-                var set = Set(t.mods)
+                var cfg = settings.spoonsTriggers[name] ?? SpoonTrigger()
+                cfg.type = "hotkey"
+                var set = Set(cfg.mods)
                 if on { set.insert(mod) } else { set.remove(mod) }
-                t.mods = ["cmd", "alt", "ctrl", "shift"].filter { set.contains($0) }
-                settings.spoonsTriggers[spoon.name] = t
+                cfg.mods = ["cmd", "alt", "ctrl", "shift"].filter { set.contains($0) }
+                settings.spoonsTriggers[name] = cfg
+            })
+        return Toggle(label, isOn: binding)
+            .toggleStyle(.checkbox)
+            .font(.system(size: 11))
+    }
+
+    private func keyBinding(for name: String) -> Binding<String> {
+        Binding(
+            get: { settings.spoonsTriggers[name]?.key ?? "" },
+            set: { k in
+                var cfg = settings.spoonsTriggers[name] ?? SpoonTrigger()
+                cfg.type = "hotkey"
+                cfg.key = k
+                settings.spoonsTriggers[name] = cfg
             })
     }
 
-    private func keyBinding(for spoon: SpoonSummary) -> Binding<String> {
+    private func minutesBinding(for name: String) -> Binding<Int> {
         Binding(
-            get: { keyDraft },
-            set: { newKey in
-                keyDraft = newKey
-                var t = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-                t.type = "hotkey"
-                t.key = newKey
-                settings.spoonsTriggers[spoon.name] = t
-            })
-    }
-
-    private func minutesBinding(for spoon: SpoonSummary) -> Binding<Int> {
-        Binding(
-            get: { minutesDraft },
+            get: { max(1, settings.spoonsTriggers[name]?.minutes ?? 5) },
             set: { m in
-                minutesDraft = max(1, m)
-                var t = settings.spoonsTriggers[spoon.name] ?? SpoonTrigger()
-                t.type = "interval"
-                t.minutes = minutesDraft
-                settings.spoonsTriggers[spoon.name] = t
+                var cfg = settings.spoonsTriggers[name] ?? SpoonTrigger()
+                cfg.type = "interval"
+                cfg.minutes = max(1, m)
+                settings.spoonsTriggers[name] = cfg
             })
     }
 
