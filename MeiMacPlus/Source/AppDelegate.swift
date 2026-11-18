@@ -15,6 +15,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var permissionGuide: PermissionGuideWindowController?
     private var settingsWindow: SettingsWindowController?
     private var scrollMonitorWindow: ScrollMonitorWindowController?
+    private var scriptConsoleWindow: ScriptConsoleWindowController?
+    private var scriptHelpWindow: ScriptHelpWindowController?
+
+    let scriptLogStore = ScriptLogStore()
 
     /// Guards settings.keepAwakeOnLidClose assignments that must NOT kick
     /// off another helper round-trip (launch-time sync, revert-after-failure).
@@ -41,12 +45,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         syncKeepAwakeFromSystem()
         applyScrollSettings()
+        applyScriptSettings()
 
         let trusted = CmdQInterceptor.isProcessTrusted()
         lastKnownTrusted = trusted
         if !trusted {
-            sessionLog.error("launch: NOT trusted for accessibility — showing guide")
-            showPermissionGuide()
+            if Self.isRunningTests {
+                sessionLog.notice("launch: NOT trusted, but running as XCTest host — skipping permission guide")
+            } else {
+                sessionLog.error("launch: NOT trusted for accessibility — showing guide")
+                showPermissionGuide()
+            }
         } else {
             sessionLog.notice("launch: trusted for accessibility")
             activateInterceptionIfDesired()
@@ -117,6 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         interceptor.stop()
         endSession(cancel: true)
         scrollEngine.stop()
+        LuaRuntime.shared.stop()
         // Process-scoped anyway; release explicitly for tidiness.
         KeepAwakeManager.shared.setDisplaySleepAssertion(false)
         VirtualDisplayManager.shared.destroy()
@@ -137,9 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func ensureSingleInstance() -> Bool {
         // The unit-test host must not terminate itself when the app is
         // already running.
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else {
-            return true
-        }
+        guard !Self.isRunningTests else { return true }
         guard let myID = Bundle.main.bundleIdentifier else { return true }
         let others = NSWorkspace.shared.runningApplications
             .filter { $0.bundleIdentifier == myID && $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
@@ -149,6 +157,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return false
         }
         return true
+    }
+
+    /// True when this process is the XCTest host (unit tests run in-process).
+    /// The test host is ad-hoc signed and rebuilt constantly, so macOS never
+    /// keeps an accessibility grant for it — it must not surface permission
+    /// UI on every test run.
+    static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// Host hook for `hs.urlevent`: on load it sets itself as the open-file
+    /// delegate (upstream's MJAppDelegate declares this property).
+    @objc private dynamic weak var openFileDelegate: NSObject?
+
+    // MARK: - Host hooks for hs core functions (see LuaRuntime.m / HSMJStubs.m)
+
+    @objc func menuBarIconVisible() -> Bool { menuBar.isIconVisible }
+    @objc func setMenuBarIconVisible(_ visible: Bool) { menuBar.setIconVisible(visible) }
+
+    @objc func consoleFloating() -> Bool { scriptConsoleWindow?.window?.level == .floating }
+    @objc func setConsoleFloating(_ floating: Bool) {
+        scriptConsoleWindow?.window?.level = floating ? .floating : .normal
+    }
+
+    @objc func isLoginItemEnabled() -> Bool { LoginItemManager.isEnabled }
+    @objc func setLoginItemEnabled(_ enabled: Bool) { _ = LoginItemManager.setEnabled(enabled) }
+
+    @objc func openPreferencesWindow() { showSettings() }
+    @objc func closePreferencesWindow() { settingsWindow?.window?.orderOut(nil) }
+
+    /// NSServices handler ("Send to MeiMacPlus" service): forwards selected
+    /// text to the user's hs.textDroppedToDockIconCallback, like upstream.
+    @objc func processDockIconDraggedText(
+        _ pboard: NSPasteboard, userData: String,
+        error: AutoreleasingUnsafeMutablePointer<NSString?>?
+    ) {
+        guard let text = pboard.string(forType: .string) else {
+            error?.pointee = "no string on pasteboard"
+            return
+        }
+        LuaRuntime.shared.notifyTextDropped(text)
+    }
+
+    /// File opens routed through hs.urlevent's openFileDelegate (mirrors
+    /// upstream MJAppDelegate's application:openFiles:).
+    func application(_ application: NSApplication, openFiles filenames: [String]) {
+        let sel = NSSelectorFromString("callbackWithURL:senderPID:")
+        for filename in filenames {
+            if let target = openFileDelegate, target.responds(to: sel) {
+                target.perform(sel, with: filename as NSString, with: 0 as NSNumber)
+            }
+        }
     }
 
     // MARK: - Wiring
@@ -182,6 +242,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBar.onOpenScrollMonitor = { [weak self] in
             self?.showScrollMonitor()
         }
+        menuBar.onToggleScript = { [weak self] in
+            self?.settings.scriptEnabled.toggle()
+        }
+        menuBar.onOpenScriptConsole = { [weak self] in
+            self?.showScriptConsole()
+        }
+        menuBar.onReloadScripts = { [weak self] in
+            self?.reloadScripts()
+        }
+        menuBar.onOpenScriptHelp = { [weak self] in
+            self?.showScriptHelp()
+        }
         menuBar.onOpenAbout = { [weak self] in
             self?.showAbout()
         }
@@ -200,12 +272,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             applyKeepAwake()
         case .scroll:
             applyScrollSettings()
+        case .script:
+            applyScriptSettings()
         default:
             break
         }
     }
 
     private func activateInterceptionIfDesired() {
+        // The XCTest host is ad-hoc signed and rebuilt constantly, so macOS
+        // treats it as a brand-new (ungranted) app on every run — creating an
+        // event tap there would trigger a "Device Control & Data Access"
+        // prompt per test run. The tap is never under test itself.
+        guard !Self.isRunningTests else { return }
         guard settings.enabled else {
             if interceptor.isRunning {
                 sessionLog.notice("protection paused — stopping tap")
@@ -226,6 +305,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Push the current settings to the engine and reconcile its lifetime
     /// with the master switch and accessibility trust.
     private func applyScrollSettings() {
+        // Same test-host rationale as activateInterceptionIfDesired: never
+        // create an event tap from the ad-hoc test host.
+        guard !Self.isRunningTests else { return }
         let config = ScrollConfig.from(settings)
         scrollEngine.updateConfig(config)
         guard config.enabled, CmdQInterceptor.isProcessTrusted() else {
@@ -241,6 +323,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Other smoothing tools (Mos, Smooze, …) fight over the same events;
     /// surface the conflict once instead of leaving the user with janky wheels.
     private func warnAboutConflictingScrollToolsOnce() {
+        guard !Self.isRunningTests else { return } // never block the test host on a modal
         guard !UserDefaults.standard.bool(forKey: "scrollConflictNoticeShown") else { return }
         let known = ["com.caldis.Mos", "com.smooze.Mac.Smooze", "is.qwerty.SmoothScroll"]
         let running = NSWorkspace.shared.runningApplications
@@ -255,6 +338,96 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.alertStyle = .warning
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
+    }
+
+    // MARK: - Scripting
+
+    /// Wire the Lua runtime's outputs to MeiMacPlus surfaces and reconcile
+    /// its lifetime with the master switch. Skipped entirely under XCTest —
+    /// tests drive LuaRuntime directly with their own config directory.
+    private func applyScriptSettings() {
+        let runtime = LuaRuntime.shared
+        runtime.logHandler = { [weak self] line in
+            self?.scriptLogStore.append(line)
+        }
+        runtime.openConsoleHandler = { [weak self] in
+            self?.showScriptConsole()
+        }
+        runtime.notifyHandler = { [weak self] message in
+            self?.deliverScriptNotification(message)
+        }
+
+        guard settings.scriptEnabled, !Self.isRunningTests else {
+            if runtime.isRunning {
+                sessionLog.notice("scripting disabled — stopping Lua runtime")
+                runtime.stop()
+            }
+            return
+        }
+
+        let configDir = ScriptConfig.prepareConfigDir(customPath: settings.scriptCustomPath)
+
+        // A running runtime survives only if it is already on the resolved
+        // directory; changing the scripts folder must restart the environment
+        // instead of silently keeping the old one until the next app launch.
+        if runtime.isRunning && runtime.configDir == configDir.path { return }
+        if runtime.isRunning {
+            sessionLog.notice("scripts directory changed — reloading Lua runtime")
+            runtime.stop()
+        }
+        if runtime.start(withConfigDir: configDir.path) {
+            sessionLog.notice("Lua runtime started (config: \(configDir.path, privacy: .public))")
+        } else {
+            sessionLog.error("Lua runtime failed to start (vendored runtime incomplete?)")
+        }
+        warnAboutHammerspoonOnce()
+    }
+
+    /// hs.hotkey uses Carbon registration; when the real Hammerspoon is also
+    /// running, conflicting global shortcuts fail to register on one side.
+    /// Surface that once, like the scroll-tool conflict warning.
+    private func warnAboutHammerspoonOnce() {
+        guard !UserDefaults.standard.bool(forKey: "scriptConflictNoticeShown") else { return }
+        let running = NSWorkspace.shared.runningApplications
+            .compactMap(\.bundleIdentifier)
+            .contains { $0.hasPrefix("org.hammerspoon.") }
+        guard running else { return }
+        UserDefaults.standard.set(true, forKey: "scriptConflictNoticeShown")
+        sessionLog.error("Hammerspoon is also running — hotkey conflicts possible")
+        let alert = NSAlert()
+        alert.messageText = L("script.conflict.title")
+        alert.informativeText = L("script.conflict.body")
+        alert.alertStyle = .warning
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
+    }
+
+    private func deliverScriptNotification(_ message: String) {
+        sessionLog.notice("script notify: \(message, privacy: .public)")
+        let notification = NSUserNotification()
+        notification.title = "MeiMacPlus"
+        notification.informativeText = message
+        NSUserNotificationCenter.default.deliver(notification)
+    }
+
+    func showScriptConsole() {
+        if scriptConsoleWindow == nil {
+            scriptConsoleWindow = ScriptConsoleWindowController(store: scriptLogStore)
+        }
+        scriptConsoleWindow?.present()
+    }
+
+    func showScriptHelp() {
+        if scriptHelpWindow == nil {
+            scriptHelpWindow = ScriptHelpWindowController()
+        }
+        scriptHelpWindow?.present()
+    }
+
+    func reloadScripts() {
+        guard LuaRuntime.shared.isRunning else { return }
+        sessionLog.notice("reloading scripts")
+        LuaRuntime.shared.reload()
     }
 
     // MARK: - Keep awake (lid closed)
@@ -276,6 +449,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 } else {
                     VirtualDisplayManager.shared.destroy()
                 }
+                // Creating/destroying the virtual display reconfigures
+                // screens, which can make AppKit drop our windows even with
+                // stable collection behavior. Bring them back deterministically.
+                await MainActor.run { restoreWindowsAfterScreenChange() }
                 try await KeepAwakeManager.shared.applyScreenLockOverride(desired)
             } catch KeepAwakeManager.KeepAwakeError.cancelled {
                 sessionLog.notice("keep-awake change cancelled by user")
@@ -301,6 +478,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 revertKeepAwake()
             }
         }
+    }
+
+    /// Re-foreground app windows after a screen reconfiguration (virtual
+    /// display create/destroy). orderFrontRegardless works even when the app
+    /// itself is not active.
+    private func restoreWindowsAfterScreenChange() {
+        settingsWindow?.window?.orderFrontRegardless()
+        scriptConsoleWindow?.window?.orderFrontRegardless()
+        scrollMonitorWindow?.window?.orderFrontRegardless()
     }
 
     /// The toggle's stored value must reflect what the system actually does:

@@ -100,3 +100,34 @@
 "settings.launchAtLogin.footer" = "MeiMacPlus 将常驻菜单栏运行，各项能力持续生效。";
 "settings.scroll.section.behavior" = "行为";
 "settings.scroll.section.blacklist" = "排除的应用";
+
+/* Scripting (1.5) */
+"settings.section.script" = "脚本";
+"settings.script.enable" = "启用 Lua 脚本";
+"settings.script.footer" = "在 MeiMacPlus 内置 Hammerspoon 兼容的 Lua 运行时，加载你的 init.lua 与 Spoons；相关系统权限提示将以 MeiMacPlus 名义弹出。";
+"settings.script.section.files" = "脚本文件";
+"settings.script.reveal" = "在 Finder 中显示";
+"settings.script.console" = "打开控制台…";
+"settings.script.reload" = "重新加载脚本";
+"settings.script.files.footer" = "优先级：所选文件夹 > ~/.hammerspoon（原样加载你的 Hammerspoon 配置）> MeiMacPlus 默认路径。92 个 hs.* 模块全部内置。";
+"menubar.scriptConsole" = "脚本控制台…";
+"menubar.reloadScripts" = "重新加载脚本";
+"scriptconsole.title" = "脚本控制台";
+"scriptconsole.status.running" = "运行时已启动";
+"scriptconsole.status.stopped" = "运行时未启动";
+"scriptconsole.clear" = "清空";
+"scriptconsole.run" = "运行";
+"scriptconsole.placeholder" = "hs.hotkey.bind({\"alt\", \"cmd\"}, \"y\", function() hs.notify.show(\"嗨\", \"\", \"来自控制台\") end)";
+"script.conflict.title" = "Hammerspoon 也在运行";
+"script.conflict.body" = "两个应用都会注册全局快捷键（hs.hotkey），冲突的组合键可能注册失败；若快捷键异常，请退出 Hammerspoon。";
+
+"settings.script.choose" = "选择文件夹…";
+"settings.script.useDefault" = "恢复默认路径";
+"settings.general.quick" = "常用开关";
+"settings.general.quick.footer" = "各功能总开关；详细设置在对应的标签页里。";
+"settings.script.choose.message" = "选择脚本文件夹（按 ⌘⇧. 可显示隐藏文件夹）";
+"menubar.quitProtection" = "退出保护";
+"menubar.scripting" = "Lua 脚本";
+"menubar.scriptHelp" = "脚本帮助…";
+"settings.script.help" = "帮助…";
+"scripthelp.title" = "脚本帮助";

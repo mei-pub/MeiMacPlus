@@ -33,6 +33,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fetch Hammerspoon runtime
+        run: |
+          ./scripts/fetch_hs_runtime.sh
+          echo "Vendored dylibs: $(ls build/hs-vendor/hs/*.dylib | wc -l | tr -d ' ')"
+
       - name: Toolchain
         run: |
           xcodebuild -version
@@ -90,7 +95,10 @@ jobs:
           IDENTITY=$(security find-identity -v -p codesigning \
             | awk -F'"' '/Developer ID Application/ {print $2; exit}')
           echo "Signing with: $IDENTITY"
+          # --entitlements keeps the TCC identity stable and the vendored
+          # hs.* dylibs loadable under library validation.
           codesign --force --deep --options runtime --timestamp \
+            --entitlements MeiMacPlus/MeiMacPlus.entitlements \
             --sign "$IDENTITY" "$APP"
           codesign --verify --strict "$APP"
 

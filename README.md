@@ -3,10 +3,12 @@
 [![Release](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml/badge.svg)](https://github.com/mei-pub/MeiMacPlus/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/mei-pub/MeiMacPlus)](https://github.com/mei-pub/MeiMacPlus/releases)
 
-**Mac 增强工具集：按住 ⌘Q 防误退 + 合盖不息屏 + 鼠标平滑滚动。** macOS 菜单栏常驻。
+**Mac 增强工具集：按住 ⌘Q 防误退 + 合盖不息屏 + 鼠标平滑滚动 + Lua 脚本扩展。** macOS 菜单栏常驻。
 
 ⌘Q 防误退的灵感来自开源项目 [SlowQuitApps](https://github.com/dteoh/SlowQuitApps)（GPL-2.0）的行为设计；
-鼠标平滑滚动的灵感来自 [Mos](https://github.com/Caldis/Mos)（CC BY-NC 4.0）的功能设计。
+鼠标平滑滚动的灵感来自 [Mos](https://github.com/Caldis/Mos)（CC BY-NC 4.0）的功能设计；
+Lua 脚本能力内嵌了 [Hammerspoon](https://www.hammerspoon.org) 1.1.1 的官方运行时（MIT，详见
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)）。
 本项目是**独立的 Swift 实现**（未复制任何上述项目的代码），采用 MIT 许可证发布。
 
 ## 功能
@@ -47,6 +49,23 @@
 - **滚动监视器**：实时查看滚轮事件、引擎决策与合成输出，调手感利器。
 - **触控板/妙控鼠标零干扰**：连续滚动事件直接放行，不做任何处理。
 - 与 Mos、Smooze 等同类工具同时运行会互相干扰，启动时自动提醒只开一个。
+
+### Lua 脚本扩展（Hammerspoon 兼容）
+
+- **完整 hs.* 运行时**：内嵌 Hammerspoon 官方 Lua 运行时（LuaSkin + 86 个原生模块），
+  你的 `init.lua` 与 Spoons 直接可用——窗口管理、快捷键、事件自动化、菜单栏、通知……
+  生态与社区脚本全部兼容。API 文档：[hammerspoon.org/docs](https://www.hammerspoon.org/docs/)
+- **脚本控制台**：实时日志流 + REPL 输入行，随时试代码、看报错；`hs.openConsole()` 可直达。
+- **一键重载**：菜单栏或设置里重载脚本（等价 `hs.reload()`）。
+- **默认关闭**：在设置 → 脚本中开启；首次开启会在
+  `~/Library/Application Support/MeiMacPlus/Scripts/` 生成带注释的示例 `init.lua`。
+- **已知限制（1.5.0）**：以下模块未内置（其原生库未随运行时分发，后续版本再补）：
+  `hs.socket`、`hs.websocket`、`hs.http`、`hs.httpserver`、`hs.midi`、`hs.serial`、
+  `hs.webview`、`hsdocs`；`hs.urlevent` 的文件打开转发未实现（URL scheme 正常）。
+  需要网络请求时可用 `hs.task` + `curl` 替代。
+- **权限归属**：脚本触发的系统权限弹窗（辅助功能/屏幕录制等）以 MeiMacPlus 名义出现，
+  与你已授权的 Hammerspoon 互不影响。
+- 与 Hammerspoon 同时运行时全局快捷键可能冲突（Carbon 注册互斥），启动时会提醒。
 
 ### 通用
 
@@ -116,15 +135,16 @@ sudo pmset -a disablesleep 0
 ## 构建与测试
 
 ```bash
+# 首次准备：拉取内嵌的 Hammerspoon 运行时（pin 版本 + sha256 校验）
+./scripts/fetch_hs_runtime.sh
+
 # 构建（本仓库自带 Xcode 工程，含 App / Tests / Helper 三个 target）
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   xcodebuild -project MeiMacPlus.xcodeproj -scheme MeiMacPlus \
   -configuration Release -derivedDataPath build/DerivedData build
 
-# 单元测试
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
-  xcodebuild -project MeiMacPlus.xcodeproj -scheme MeiMacPlus \
-  -configuration Debug -derivedDataPath build/DerivedData test
+# 单元测试（本地务必用这个脚本：稳定身份签名测试宿主，避免每次构建后重复弹权限窗）
+./scripts/test_dev.sh
 
 # 日常开发（Release 构建 + 用稳定的自签名身份重签，保持 TCC 授权不丢）
 ./scripts/make_dev_identity.sh   # 首次
@@ -139,7 +159,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 
 设置持久化在 `com.meimacplus.MeiMacPlus` 域，键名与 SlowQuitApps 习惯对齐：
 `enabled`、`delay`（毫秒）、`displayOverlay`、`whitelist`（Bundle ID 数组）、`invertList`、
-`keepAwakeOnLidClose`。
+`keepAwakeOnLidClose`、`scriptEnabled`。
 
 ```bash
 # 例：按住 2 秒才退出
@@ -160,6 +180,9 @@ defaults write com.meimacplus.MeiMacPlus delay -int 2000
 | `MeiMacPlusHelper` | 特权助手守护进程（root XPC 服务，pmset 写入 + 客户端签名校验） |
 | `MenuBarController` | 菜单栏图标与菜单 |
 | `LoginItemManager` | SMAppService 开机启动 |
+| `LuaRuntime` / `HSMJStubs` | 内嵌 Hammerspoon 运行时引导（移植自 MJLua.m）+ 宿主符号适配 |
+| `ScriptConsoleWindowController` | 脚本控制台（日志流 + REPL） |
+| `ScriptConfig` | 脚本目录与示例 init.lua 管理 |
 | `AppSettings` | UserDefaults 封装（ObservableObject） |
 
 ## 设计决策：为什么不发 Mac App Store
@@ -171,3 +194,4 @@ defaults write com.meimacplus.MeiMacPlus delay -int 2000
 ## 许可
 
 MIT © 2026 MeiMacPlus。行为设计致谢 [SlowQuitApps](https://github.com/dteoh/SlowQuitApps)（GPL-2.0，本项目未复制其代码）。
+内嵌组件的许可与升级流程见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。

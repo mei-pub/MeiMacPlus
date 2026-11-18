@@ -30,7 +30,10 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   >/dev/null
 
 echo "==> codesign"
+# --entitlements preserves the TCC identity across re-signs and keeps the
+# vendored hs.* dylibs loadable under library validation (see build_dev.sh).
 codesign --force --deep --options runtime --timestamp \
+  --entitlements "$ROOT/MeiMacPlus/MeiMacPlus.entitlements" \
   --sign "$SIGN_IDENTITY" "$APP"
 
 echo "==> verify"

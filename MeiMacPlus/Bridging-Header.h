@@ -7,6 +7,9 @@
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 
+// Hammerspoon Lua runtime bootstrap (vendored runtime under build/hs-vendor).
+#import "Source/Scripting/LuaRuntime.h"
+
 @interface CGVirtualDisplay : NSObject
 @property(readonly, nonatomic) unsigned int displayID;
 - (id)initWithDescriptor:(id)arg1;

@@ -17,6 +17,10 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     var onToggleKeepAwake: (() -> Void)?
     var onToggleScroll: (() -> Void)?
     var onOpenScrollMonitor: (() -> Void)?
+    var onToggleScript: (() -> Void)?
+    var onOpenScriptConsole: (() -> Void)?
+    var onReloadScripts: (() -> Void)?
+    var onOpenScriptHelp: (() -> Void)?
     var onOpenAbout: (() -> Void)?
     var onQuit: (() -> Void)?
 
@@ -30,6 +34,16 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.delegate = self
         menu.autoenablesItems = false
         item.menu = menu
+    }
+
+    /// Visibility of the menu bar icon itself (hs.menuIcon).
+    var isIconVisible: Bool {
+        get { statusItem?.isVisible ?? true }
+        set { statusItem?.isVisible = newValue }
+    }
+
+    func setIconVisible(_ visible: Bool) {
+        statusItem?.isVisible = visible
     }
 
     func refresh() {
@@ -68,8 +82,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(statusLine)
         menu.addItem(.separator())
 
+        // Feature switches — mirrors the "Common Switches" card in Settings.
         let enableItem = NSMenuItem(
-            title: L("menubar.enable"),
+            title: L("menubar.quitProtection"),
             action: #selector(toggleEnabled(_:)), keyEquivalent: ""
         )
         enableItem.target = self
@@ -102,23 +117,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         delayItem.submenu = delayMenu
         menu.addItem(delayItem)
 
-        let settingsItem = NSMenuItem(
-            title: L("menubar.settings"),
-            action: #selector(openSettings(_:)), keyEquivalent: ","
-        )
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-
-        menu.addItem(.separator())
-
-        let loginItem = NSMenuItem(
-            title: L("menubar.launchAtLogin"),
-            action: #selector(toggleLoginItem(_:)), keyEquivalent: ""
-        )
-        loginItem.target = self
-        loginItem.state = LoginItemManager.isEnabled ? .on : .off
-        menu.addItem(loginItem)
-
         let keepAwakeItem = NSMenuItem(
             title: L("menubar.keepAwake"),
             action: #selector(toggleKeepAwake(_:)), keyEquivalent: ""
@@ -136,6 +134,17 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         scrollItem.isEnabled = trusted
         menu.addItem(scrollItem)
 
+        let scriptItem = NSMenuItem(
+            title: L("menubar.scripting"),
+            action: #selector(toggleScript(_:)), keyEquivalent: ""
+        )
+        scriptItem.target = self
+        scriptItem.state = settings.scriptEnabled ? .on : .off
+        menu.addItem(scriptItem)
+
+        // Feature tools.
+        menu.addItem(.separator())
+
         let scrollMonitorItem = NSMenuItem(
             title: L("menubar.scrollMonitor"),
             action: #selector(openScrollMonitor(_:)), keyEquivalent: ""
@@ -144,7 +153,49 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         scrollMonitorItem.isEnabled = settings.scrollEnabled
         menu.addItem(scrollMonitorItem)
 
+        let scriptConsoleItem = NSMenuItem(
+            title: L("menubar.scriptConsole"),
+            action: #selector(openScriptConsole(_:)), keyEquivalent: ""
+        )
+        scriptConsoleItem.target = self
+        scriptConsoleItem.isEnabled = settings.scriptEnabled
+        menu.addItem(scriptConsoleItem)
+
+        let reloadScriptsItem = NSMenuItem(
+            title: L("menubar.reloadScripts"),
+            action: #selector(reloadScripts(_:)), keyEquivalent: ""
+        )
+        reloadScriptsItem.target = self
+        reloadScriptsItem.isEnabled = settings.scriptEnabled
+        menu.addItem(reloadScriptsItem)
+
+        let scriptHelpItem = NSMenuItem(
+            title: L("menubar.scriptHelp"),
+            action: #selector(openScriptHelp(_:)), keyEquivalent: ""
+        )
+        scriptHelpItem.target = self
+        menu.addItem(scriptHelpItem)
+
+        // App section.
+        menu.addItem(.separator())
+
+        let settingsItem = NSMenuItem(
+            title: L("menubar.settings"),
+            action: #selector(openSettings(_:)), keyEquivalent: ","
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let loginItem = NSMenuItem(
+            title: L("menubar.launchAtLogin"),
+            action: #selector(toggleLoginItem(_:)), keyEquivalent: ""
+        )
+        loginItem.target = self
+        loginItem.state = LoginItemManager.isEnabled ? .on : .off
+        menu.addItem(loginItem)
+
         if !trusted {
+            menu.addItem(.separator())
             let permissionItem = NSMenuItem(
                 title: L("menubar.grantPermission"),
                 action: #selector(grantPermission(_:)), keyEquivalent: ""
@@ -205,6 +256,22 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     @objc private func openScrollMonitor(_ sender: Any?) {
         onOpenScrollMonitor?()
+    }
+
+    @objc private func openScriptConsole(_ sender: Any?) {
+        onOpenScriptConsole?()
+    }
+
+    @objc private func toggleScript(_ sender: Any?) {
+        onToggleScript?()
+    }
+
+    @objc private func reloadScripts(_ sender: Any?) {
+        onReloadScripts?()
+    }
+
+    @objc private func openScriptHelp(_ sender: Any?) {
+        onOpenScriptHelp?()
     }
 
     @objc private func grantPermission(_ sender: Any?) {

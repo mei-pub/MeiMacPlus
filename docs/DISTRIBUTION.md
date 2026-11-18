@@ -93,6 +93,26 @@ xcrun notarytool history --keychain-profile notary-meimacplus
 3. 退出动作改用 Apple Event + `NSAppleEventsUsageDescription`（带用户授权弹窗）；
 4. 该版本无法 100% 复刻 keyUp 精确检测，体验有损 —— 这正是当初放弃的原因。
 
+## Hammerspoon 运行时 vendoring（1.5.0 起）
+
+脚本功能内嵌 Hammerspoon 官方运行时，来源与流程：
+
+- `scripts/fetch_hs_runtime.sh`：下载 **pin 版本**（1.1.1）的官方 release zip，
+  **sha256 校验**，抽取 `LuaSkin.framework`、86 个 `hs/*.dylib`（排除
+  socket/websocket/httpserver/midi/serial 六个依赖未内嵌库的模块）、
+  `extensions/`、`setup.lua` 到 `build/hs-vendor/`，并把 `HSuicore.h/.m`
+  源码写入 `MeiMacPlus/Source/Scripting/Vendor/`（随 git 提交）。
+- Xcode 的 "Vendor HS Runtime" Run Script phase 把产物拷进 app bundle 并
+  逐个 ad-hoc 重签（启用 `alwaysOutOfDate`，因为输入不在 Xcode 依赖图内）。
+- 主 target 以 `OTHER_LDFLAGS = -framework LuaSkin` 链接；加载 vendored
+  dylib 需要 `MeiMacPlus.entitlements` 里的
+  `com.apple.security.cs.disable-library-validation`。
+- **重签必须带 `--entitlements`**（build_dev.sh / sign_and_notarize.sh /
+  CI 均已配置）：丢失 entitlements 会同时破坏 TCC 身份稳定性与 dylib 加载。
+- **升级流程**：改 `HS_VERSION`/`HS_SHA256` → 删 `build/hs-vendor` → 重跑
+  脚本 → 全量测试（`testAllVendoredModulesLoad` 是宿主符号/裁剪清单的
+  回归门）。详见 [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md)。
+
 ## 关键命令速查
 
 ```bash
