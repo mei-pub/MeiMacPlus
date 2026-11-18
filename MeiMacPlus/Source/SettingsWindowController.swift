@@ -537,17 +537,10 @@ private struct ScriptDirectoryPicker: View {
 /// Hammerspoon-preferences parity: login/dock/menu/console + AX status.
 private struct BehaviorRows: View {
     @ObservedObject private var settings = AppSettings.shared
-    @State private var launchAtLogin = LoginItemManager.isEnabled
     @State private var trusted = CmdQInterceptor.isProcessTrusted()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Toggle(L("settings.launchAtLogin"), isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { on in
-                    if !LoginItemManager.setEnabled(on) {
-                        launchAtLogin = LoginItemManager.isEnabled
-                    }
-                }
             Toggle(L("settings.behavior.dock"), isOn: $settings.dockIconVisible)
             Toggle(L("settings.behavior.menuIcon"), isOn: $settings.menuBarIconVisible)
                 .disabled(!settings.dockIconVisible)

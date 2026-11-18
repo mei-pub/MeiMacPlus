@@ -152,3 +152,9 @@
 "settings.behavior.ax.ok" = "Accessibility is enabled. You are all set!";
 "settings.behavior.ax.no" = "Accessibility is not granted";
 "settings.behavior.ax.grant" = "Grant...";
+"settings.spoons.trigger.type" = "Trigger";
+"settings.spoons.trigger.auto" = "Auto";
+"settings.spoons.trigger.hotkey" = "Hotkey";
+"settings.spoons.trigger.interval" = "Scheduled";
+"settings.spoons.trigger.minutes" = "min";
+"settings.spoons.trigger.autoHint" = "Enabled spoon loads with its own default behavior";
