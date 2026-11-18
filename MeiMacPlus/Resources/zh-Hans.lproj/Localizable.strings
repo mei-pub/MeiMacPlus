@@ -135,3 +135,5 @@
 "settings.spoons.filter" = "筛选 / 搜索…";
 "settings.spoons.count" = "已启用 %d / %d";
 "settings.spoons.footer" = "89 个官方 Spoon 已全部内置、默认关闭。打开开关即加载（并调用 start()）；详细文档见菜单栏 → 脚本帮助 → Spoons。";
+"settings.spoons.title" = "内置 Spoon 管理 —— 官方扩展包，已全部内置";
+"settings.spoons.intro" = "使用说明：Spoon 是 Hammerspoon 官方扩展包。打开开关后脚本重载即生效——自带默认行为的 Spoon（如 Caffeine 咖啡杯）立即生效；需要参数配置的 Spoon 在 init.lua 里用 hs.loadSpoon(\"名称\") 后自行配置。全部中文详解见菜单栏 → 脚本帮助 → Spoons。";

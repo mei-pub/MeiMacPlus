@@ -17,6 +17,12 @@ struct SpoonsManagerCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text(L("settings.spoons.title"))
+                .font(.system(size: 15, weight: .semibold))
+            Text(L("settings.spoons.intro"))
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             HStack {
                 TextField(L("settings.spoons.filter"), text: $filter)
                     .textFieldStyle(.roundedBorder)

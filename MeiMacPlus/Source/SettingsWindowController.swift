@@ -11,7 +11,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 780, height: 580),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -19,7 +19,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.title = L("settings.title")
         window.contentView = NSHostingView(rootView: SettingsView())
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 560, height: 460)
+        window.minSize = NSSize(width: 700, height: 480)
         // Creating/destroying the keep-awake virtual display reconfigures
         // screens; without these the system can relocate or hide the window.
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
@@ -81,7 +81,15 @@ struct SettingsView: View {
                     .tag(tab)
             }
         }
-        .frame(minWidth: 560, minHeight: 460)
+        .frame(minWidth: 700, minHeight: 480)
+        .background {
+            // Esc closes the settings window (hidden cancel-action button).
+            Button("") {
+                NSApp.keyWindow?.close()
+            }
+            .keyboardShortcut(.cancelAction)
+            .opacity(0)
+        }
     }
 
     @ViewBuilder
