@@ -528,11 +528,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 KeepAwakeManager.readSystemDisablesSleep()
             }.value
             guard let actual else { return }
+            // The user's intent (stored toggle) outranks the system state:
+            // a previous apply can be interrupted (app killed mid-helper-
+            // write during an update relaunch), leaving pmset stale. Re-run
+            // the full apply to heal the divergence instead of silently
+            // resetting the toggle to whatever pmset last said.
             if actual != settings.keepAwakeOnLidClose {
-                sessionLog.notice("keep-awake synced from system: \(actual, privacy: .public)")
-                applyingKeepAwake = true
-                settings.keepAwakeOnLidClose = actual
-                applyingKeepAwake = false
+                sessionLog.notice("keep-awake diverged (system=\(actual, privacy: .public), intent=\(self.settings.keepAwakeOnLidClose, privacy: .public)) — re-applying intent")
+                applyKeepAwake()
+                return
             }
             // The display-sleep assertion is process-scoped and must be
             // re-created on every launch, whatever the stored value says.

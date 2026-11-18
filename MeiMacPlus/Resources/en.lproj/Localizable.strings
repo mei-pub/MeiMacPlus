@@ -137,3 +137,4 @@
 "settings.spoons.footer" = "All 89 official Spoons are bundled and OFF by default. Flipping a switch loads it (and calls start()) after a script reload; detailed docs: menu bar → Scripting Help → Spoons.";
 "settings.spoons.title" = "Bundled Spoons — official extension packs, all built in";
 "settings.spoons.intro" = "Spoon 是 Hammerspoon 官方扩展包。How to use: flip a switch, then the spoon loads after a script reload — spoons with default behavior (e.g. Caffeine) activate immediately; configurable spoons are set up in your init.lua via hs.loadSpoon(\"Name\"). Full Chinese docs: menu bar → Scripting Help → Spoons.";
+"settings.spoons.usage" = "Usage";
