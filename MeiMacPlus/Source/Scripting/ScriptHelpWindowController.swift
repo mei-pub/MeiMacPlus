@@ -5,6 +5,7 @@ import WebKit
 /// reference) rendered from the bundled HTML + the vendored docs.json —
 /// strictly matching the embedded runtime version.
 final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate {
+    private var escapeToken: WindowEscapeCloser.Token?
 
 
     init() {
@@ -33,6 +34,7 @@ final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate, WK
         super.init(window: window)
         window.delegate = self
         webView.navigationDelegate = self
+        escapeToken = WindowEscapeCloser.attach(to: window)
     }
 
     required init?(coder: NSCoder) { nil }
@@ -40,6 +42,10 @@ final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate, WK
     func present() {
         showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        escapeToken?.invalidate()
     }
 
     /// Module/Spoon links point at hammerspoon.org — hand them to the
