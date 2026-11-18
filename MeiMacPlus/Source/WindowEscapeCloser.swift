@@ -16,7 +16,7 @@ enum WindowEscapeCloser {
         let token = Token(monitor: NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             guard event.window === window,
                   event.keyCode == 53, // Esc
-                  event.modifierFlags.intersection(.deviceIndependentFlagsSet).subtracting(.capsLock).isEmpty
+                  event.modifierFlags.subtracting(.capsLock).isEmpty
             else { return event }
             window.close()
             return nil
