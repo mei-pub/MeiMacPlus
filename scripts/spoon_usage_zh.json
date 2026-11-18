@@ -1,0 +1,447 @@
+{
+ "AClock": {
+  "how": "auto",
+  "trigger": "点击菜单栏时钟图标",
+  "text": "启用后菜单栏出现时钟图标，点击弹出大字号时钟浮窗。"
+ },
+ "AllBrightness": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后在 init.lua 里 bindHotkeys 绑定快捷键，按下同时增/减所有外接显示器的亮度。"
+ },
+ "AppLauncher": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后在 init.lua 的 :start({shortcuts={h='Safari',…}}) 里配置『按键=应用』表，按对应键直接切到/启动该应用。"
+ },
+ "AppWindowSwitcher": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后配置快捷键，按下在当前应用的多个窗口间循环切换。"
+ },
+ "ArrangeDesktop": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后先手动摆好桌面图标，用 :saveLayout() 保存；之后绑定快捷键一键恢复桌面图标位置。"
+ },
+ "Asana": {
+  "how": "config",
+  "trigger": "My Access Token",
+  "text": "启用后在 init.lua 填入 Asana 个人令牌并绑定快捷键，弹出今日到期任务列表。"
+ },
+ "AutoMuteOnSleep": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后系统进入睡眠时自动静音、唤醒后恢复原音量，无需任何操作。"
+ },
+ "BingDaily": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后每天自动下载 Bing 今日壁纸设为桌面；也可绑定快捷键手动更换。"
+ },
+ "BonjourLauncher": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，弹出局域网内 Bonjour 服务（AirPlay、打印机等）列表快速打开。"
+ },
+ "BrewInfo": {
+  "how": "config",
+  "trigger": "选中包名后触发",
+  "text": "启用后选中/复制的 Homebrew 包名触发查询，弹出该包的简介与安装命令。"
+ },
+ "Caffeine": {
+  "how": "auto",
+  "trigger": "点击菜单栏咖啡杯",
+  "text": "启用后菜单栏出现咖啡杯图标：点一下防休眠开启（杯子满），再点恢复（杯子空）。可另配快捷键切换。"
+ },
+ "Calendar": {
+  "how": "auto",
+  "trigger": "点击菜单栏日期",
+  "text": "启用后菜单栏显示今天日期，点击查看日历面板，可选显示月视图。"
+ },
+ "Cherry": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，屏幕上标出每个按键的功能提示（游戏/专业软件按键教学风）。"
+ },
+ "CircleClock": {
+  "how": "auto",
+  "trigger": "菜单栏圆环",
+  "text": "启用后菜单栏出现圆环时钟（指针随时间转动）。"
+ },
+ "ClipShow": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，弹出剪贴板多条历史内容，点选即粘贴。"
+ },
+ "ClipboardTool": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键弹出剪贴板历史面板；支持保存常用片段、按类型过滤。"
+ },
+ "ColorPicker": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，点击屏幕任意位置取色，色值自动进剪贴板。"
+ },
+ "Commander": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后在 init.lua 注册命令表并绑定快捷键，呼出命令面板执行自定义动作。"
+ },
+ "CountDown": {
+  "how": "auto",
+  "trigger": "⌘⌃⌥T 等默认键",
+  "text": "启用即有默认快捷键：⌘⌃⌥T 开始 5 分钟倒计时、⌘⌃⌥⇧T 自定义时长、⌘⌃⌥P 暂停/继续、⌘⌃⌥C 取消，屏幕中央显示倒计时。"
+ },
+ "DeepLTranslate": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后在 init.lua 填 DeepL API key 并绑定快捷键，翻译选中/剪贴板文本并弹窗显示。"
+ },
+ "EjectMenu": {
+  "how": "auto",
+  "trigger": "点击菜单栏弹出图标",
+  "text": "启用后菜单栏出现弹出图标，列出所有可弹出卷宗/磁盘，点击单个或全部弹出；拔盘可自动弹出。"
+ },
+ "EmmyLua": {
+  "how": "auto",
+  "trigger": "自动（开发用）",
+  "text": "启用后为 EmmyLua/VSCode 插件生成 Hammerspoon 的 API 注解文件，写脚本时获得自动补全（对运行无影响）。"
+ },
+ "Emojis": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，弹出表情选择面板，选中即复制。"
+ },
+ "EvernoteOpenAndTag": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后配置标签并绑定快捷键，把选中内容快速存入 Evernote 并打标签。"
+ },
+ "FadeLogo": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后屏幕唤醒时 Apple logo 渐隐渐显过渡（旧机型唤醒白屏的视觉缓解）。"
+ },
+ "FnMate": {
+  "how": "auto",
+  "trigger": "Fn 组合键",
+  "text": "启用后 Fn+字母/数字 触发对应自定义功能（如 Fn+E 打开表情面板），默认提供若干映射，可自行扩展。"
+ },
+ "ForceTouchMapper": {
+  "how": "config",
+  "trigger": "自定义映射",
+  "text": "启用后在 init.lua 配置『强按=某功能』映射表（如强按词=查词典）。"
+ },
+ "HCalendar": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后填 iCal 日历名并绑定快捷键，弹出今日日程列表。"
+ },
+ "HSKeybindings": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，弹出当前 Hammerspoon 已注册的全部快捷键速查表。"
+ },
+ "HSaria2": {
+  "how": "config",
+  "trigger": "aria2 RPC",
+  "text": "启用后在 init.lua 填 aria2 的 RPC 地址，用提供的 API 控制下载任务。"
+ },
+ "HSearch": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键弹出搜索框，选引擎（Google/百度/词典…）直接搜剪贴板或输入内容。"
+ },
+ "HeadphoneAutoPause": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后拔出耳机自动暂停音乐/视频播放（通过系统播放控制），插回不自动续播。"
+ },
+ "HighSierraiTunesMediaFix": {
+  "how": "auto",
+  "trigger": "自动（旧系统）",
+  "text": "启用后修复旧版 macOS 上 iTunes/Music 媒体键失效问题。"
+ },
+ "HoldToQuit": {
+  "how": "auto",
+  "trigger": "长按 ⌘Q",
+  "text": "启用后按住 ⌘Q 约 1 秒才退出应用（防误触），松开取消。与 MeiMacPlus 自带退出保护功能重叠，二选一即可。"
+ },
+ "InputMethodIndicator": {
+  "how": "auto",
+  "trigger": "屏幕角落指示条",
+  "text": "启用后屏幕角落显示当前输入法（拼音/ABC）色条，打字时一眼可辨。"
+ },
+ "InputSourceSwitch": {
+  "how": "config",
+  "trigger": "按应用自动切换",
+  "text": "启用后配置『应用→输入法』映射（如终端用英文、微信用拼音），切换应用自动切输入法。"
+ },
+ "KSheet": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，弹出当前应用快捷键速查覆盖层（数据需自行提供）。"
+ },
+ "Keychain": {
+  "how": "config",
+  "trigger": "API 调用",
+  "text": "启用后可在脚本里读写 macOS 钥匙串（存取敏感字符串），无独立界面。"
+ },
+ "Leanpub": {
+  "how": "config",
+  "trigger": "API 调用",
+  "text": "启用后填 Leanpub API key，用提供的 API 触发书籍构建/预览。"
+ },
+ "LeftRightHotkey": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定可区分左右侧修饰键的热键（如仅左⌘+K），标准 hs.hotkey 做不到。"
+ },
+ "LookupSelection": {
+  "how": "auto",
+  "trigger": "选中文字触发",
+  "text": "启用后选中单词即可用系统词典弹窗查询（走 dict:// 协议）。"
+ },
+ "MenubarFlag": {
+  "how": "auto",
+  "trigger": "菜单栏国旗",
+  "text": "启用后菜单栏显示当前输入法对应的国旗/图标（拼音显示中文旗，ABC 显示美旗）。"
+ },
+ "MicMute": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键（如 ⌥⌘M），按下静音/取消静音麦克风，屏幕提示状态；支持按住临时开麦模式。"
+ },
+ "MiddleClickDragScroll": {
+  "how": "auto",
+  "trigger": "按住中键拖动",
+  "text": "启用后按住鼠标中键拖动即像触控板一样平滑滚动页面。"
+ },
+ "MiroWindowsManager": {
+  "how": "config",
+  "trigger": "建议 ⌃⌥⌘M 循环",
+  "text": "启用后绑定快捷键，连按同一键循环切换窗口布局（右半屏→全屏→左半屏→还原）。"
+ },
+ "ModalMgr": {
+  "how": "config",
+  "trigger": "自定义前导键",
+  "text": "启用后按前导键进入模态模式，再按子键触发多级快捷功能（i3 风格）。"
+ },
+ "MountedVolumes": {
+  "how": "auto",
+  "trigger": "菜单栏卷列表",
+  "text": "启用后菜单栏显示已挂载卷图标列表，点击可打开/弹出。"
+ },
+ "MouseCircle": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，屏幕出现环形应用列表，用鼠标方向选择并启动。"
+ },
+ "MouseFollowsFocus": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后键盘切换窗口时鼠标指针自动跟到该窗口上。"
+ },
+ "MoveSpaces": {
+  "how": "config",
+  "trigger": "API 调用",
+  "text": "启用后用提供的 API 把当前窗口移到指定 Space（需自行绑定快捷键）。"
+ },
+ "MusicAppMediaFix": {
+  "how": "auto",
+  "trigger": "自动（旧系统）",
+  "text": "启用后修复旧版 macOS 上音乐 App 对媒体键无响应的问题。"
+ },
+ "OBS": {
+  "how": "config",
+  "trigger": "OBS WebSocket",
+  "text": "启用后在 init.lua 填 OBS 的 WebSocket 地址/密码，用 API 控制录制、场景切换。"
+ },
+ "PaperWM": {
+  "how": "auto",
+  "trigger": "⌃⌥⌘ 方向键等默认键",
+  "text": "启用即生效：动态平铺窗口管理器，默认 ⌃⌥⌘←/→ 聚焦/交换窗口、⌃⌥⌘Enter 居中、自动整理窗口成列。"
+ },
+ "PasswordGenerator": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键生成随机密码并复制（长度/字符集可配）。"
+ },
+ "Pastebin": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后填 pastebin API key 并绑定快捷键，把选中/剪贴板文本上传并取回链接。"
+ },
+ "PersonalHotspot": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键开关 iPhone 个人热点（需同一 iCloud）。"
+ },
+ "PopupTranslateSelection": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，翻译选中文本弹窗显示（走系统词典或配置的服务）。"
+ },
+ "PushToTalk": {
+  "how": "auto",
+  "trigger": "按住某热键",
+  "text": "启用后按住 ⌘⌥Z 等默认键临时开麦（松开恢复静音），会议软件通用。"
+ },
+ "RecursiveBinder": {
+  "how": "config",
+  "trigger": "自定义前导键",
+  "text": "启用后配置多级按键树（如 leader→w→l 关窗口），实现无限层快捷键。"
+ },
+ "ReloadConfiguration": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后 init.lua/配置文件保存时自动 hs.reload()，无需手动重载。"
+ },
+ "RoundedCorners": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后给不支持圆角的窗口补上系统风格圆角。"
+ },
+ "Seal": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键呼出命令条：输词即搜（网页/词典/应用/文件），插件扩展（类 Alfred）。"
+ },
+ "SendToOmniFocus": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，把选中文字作为任务发到 OmniFocus 收件箱。"
+ },
+ "Shade": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，一键盖黑整个屏幕（演示/隐私），再按还原。"
+ },
+ "SleepCorners": {
+  "how": "config",
+  "trigger": "触发角配置",
+  "text": "启用后配置四个角落动作（如左下角移入即息屏）。"
+ },
+ "SpeedMenu": {
+  "how": "auto",
+  "trigger": "菜单栏实时网速",
+  "text": "启用后菜单栏实时显示上下行网速。"
+ },
+ "SpoonInstall": {
+  "how": "auto",
+  "trigger": "API/脚本",
+  "text": "启用后可在脚本里自动安装/更新其他 Spoon（本 App 已内置全部，主要用于在线更新）。"
+ },
+ "TextClipboardHistory": {
+  "how": "auto",
+  "trigger": "自动记录",
+  "text": "启用后自动记录剪贴板文本历史；用提供的 API 读取/清除（配合自己绑的快捷键）。"
+ },
+ "TimeFlow": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，屏幕显示优雅的时间流逝（翻页时钟）全屏视图。"
+ },
+ "TimeMachineProgress": {
+  "how": "auto",
+  "trigger": "菜单栏进度",
+  "text": "启用后菜单栏显示 Time Machine 备份进度百分比。"
+ },
+ "ToggleScreenRotation": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键在横屏/竖屏间切换外接显示器。"
+ },
+ "ToggleSkypeMute": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键切换 Skype 静音。"
+ },
+ "Token": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后配置令牌密钥并绑定快捷键，一键生成 2FA 验证码到剪贴板。"
+ },
+ "Tunnelblick": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键连接/断开 Tunnelblick VPN 配置。"
+ },
+ "TurboBoost": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键开关 Intel 机型的 Turbo Boost（含菜单栏状态图标）。"
+ },
+ "URLDispatcher": {
+  "how": "config",
+  "trigger": "规则表配置",
+  "text": "启用后配置『URL 模式→浏览器/应用』分发规则，链接按规则打开。"
+ },
+ "USBDeviceActions": {
+  "how": "config",
+  "trigger": "设备动作表",
+  "text": "启用后配置『USB 设备插入/拔出→动作』（如插入鼠标关闭触控板）。"
+ },
+ "UniversalArchive": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，在 Mail/Things/MailMate 等里归档当前选中项。"
+ },
+ "UnsplashRandom": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键换随机 Unsplash 桌面壁纸。"
+ },
+ "UnsplashZ": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键从 Unsplash 换壁纸，支持按收藏列表。"
+ },
+ "VolumeScroll": {
+  "how": "auto",
+  "trigger": "在菜单栏上滚轮",
+  "text": "启用后鼠标悬停菜单栏音量图标处滚动滚轮即可调音量（部分系统版本可直接滚动任意菜单栏区域）。"
+ },
+ "WiFiTransitions": {
+  "how": "config",
+  "trigger": "网络动作表",
+  "text": "启用后配置『连上某 Wi-Fi→执行动作』（如公司网络自动开 VPN）。"
+ },
+ "WifiNotifier": {
+  "how": "auto",
+  "trigger": "自动通知",
+  "text": "启用后 Wi-Fi 连接/断开时自动发系统通知。"
+ },
+ "WinWin": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后配置快捷键组：半屏/四分/居中/最大化等窗口布局一键切换。"
+ },
+ "WindowGrid": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键，屏幕出网格，拖窗口到网格区放置。"
+ },
+ "WindowHalfsAndThirds": {
+  "how": "config",
+  "trigger": "建议 ⌃⌘←/→ 等",
+  "text": "启用后在 init.lua 用 bindHotkeys 绑定（README 默认表：⌃⌘← 左半屏、⌃⌘→ 右半屏、⌃⌘↑ 上半屏、⌃⌘1/2 四分…），一键调整窗口到半屏/三分屏。"
+ },
+ "WindowScreenLeftAndRight": {
+  "how": "config",
+  "trigger": "自定义快捷键",
+  "text": "启用后绑定快捷键把当前窗口整体移到左/右一台显示器。"
+ },
+ "WindowSigils": {
+  "how": "config",
+  "trigger": "标记配置",
+  "text": "启用后给窗口打标记（sigil），之后用快捷键跳回打过标记的窗口。"
+ },
+ "ZeroOffset": {
+  "how": "auto",
+  "trigger": "自动",
+  "text": "启用后修正某些应用窗口定位时的 1px 偏移问题（配合窗口管理类 Spoon）。"
+ }
+}
