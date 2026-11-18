@@ -68,5 +68,16 @@ emit(resources / "ScriptSpoons.data.js", {
     "__SPOON_DOCS__": json.dumps(spoon_docs, ensure_ascii=False),
     "__DOCS_ZH__": json.dumps(zh, ensure_ascii=False),
 })
+
+# Per-spoon usage for the settings manager (plain JSON, read by Swift):
+# name -> {zh, en} usage description (the spoon's module doc).
+usage = {}
+for name, entry in spoon_docs.items():
+    usage[name] = {
+        "zh": zh.get(f"spoon|{name}", ""),
+        "en": (entry.get("doc") or entry.get("desc") or "").strip(),
+    }
+(resources / "spoon_usage.json").write_text(
+    json.dumps(usage, ensure_ascii=False, indent=1))
 print(f"help data: {len(docs)} modules, {len(spoon_list)} spoons, "
       f"{len(zh)} zh strings")
