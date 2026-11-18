@@ -159,3 +159,4 @@
 "settings.spoons.trigger.minutes" = "min";
 "settings.spoons.trigger.autoHint" = "Enabled spoon loads with its own default behavior";
 "settings.spoons.col.params" = "Parameters";
+"settings.spoons.trigger.externalHint" = "Needs init.lua configuration (see Usage column)";

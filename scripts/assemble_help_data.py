@@ -83,6 +83,7 @@ for name, entry in spoon_docs.items():
     u = curated.get(name, {})
     usage[name] = {
         "how": u.get("how", ""),
+        "triggers": u.get("triggers", ["external"]),
         "trigger": u.get("trigger", ""),
         "text": u.get("text", ""),
         "zh": zh.get(f"spoon|{name}", ""),
@@ -91,6 +92,7 @@ for name, entry in spoon_docs.items():
     for i, sp in enumerate(spoon_list):
         if sp["name"] == name:
             sp["how"] = usage[name]["how"]
+            sp["triggers"] = usage[name]["triggers"]
             sp["trigger"] = usage[name]["trigger"]
             sp["usage"] = usage[name]["text"]
 (resources / "spoon_usage.json").write_text(
