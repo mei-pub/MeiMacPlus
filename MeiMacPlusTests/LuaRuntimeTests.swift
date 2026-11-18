@@ -311,7 +311,15 @@ final class ScriptHelpAssetsTests: XCTestCase {
         // Spoons tab content is baked into the page.
         let html = (try? String(contentsOf: resources.appendingPathComponent("ScriptHelp.index.html"), encoding: .utf8)) ?? ""
         XCTAssertTrue(html.contains("SpoonInstall"), "Spoons tab data missing")
-        XCTAssertTrue(html.contains("hammerspoon.org/docs/"), "module doc links missing")
+        // Spoons detail data + zh map ship as JS files (WKWebView can't fetch()).
+        for js in ["ScriptSpoons.data.js"] {
+            XCTAssertTrue(FileManager.default.fileExists(
+                atPath: resources.appendingPathComponent(js).path), "\(js) missing")
+        }
+        let spoonDirs = (try? FileManager.default.contentsOfDirectory(
+            atPath: resources.appendingPathComponent("spoons").path)) ?? []
+        XCTAssertGreaterThanOrEqual(spoonDirs.filter { $0.hasSuffix(".spoon") }.count, 89,
+                                    "bundled spoons missing")
         if let head = try? String(contentsOfFile: dataPath, encoding: .utf8).prefix(30) {
             XCTAssertTrue(head.hasPrefix("window.__DOCS__="), "data.js has no assignment prefix")
         }

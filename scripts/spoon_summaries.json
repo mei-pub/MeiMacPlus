@@ -1,0 +1,447 @@
+[
+ {
+  "name": "AClock",
+  "zh": "时钟浮窗",
+  "en": "Floating clock"
+ },
+ {
+  "name": "AllBrightness",
+  "zh": "调节所有显示器亮度",
+  "en": "Adjust all displays' brightness"
+ },
+ {
+  "name": "AppLauncher",
+  "zh": "快捷启动应用",
+  "en": "Quick app launcher"
+ },
+ {
+  "name": "AppWindowSwitcher",
+  "zh": "当前应用窗口切换",
+  "en": "Switch windows of the active app"
+ },
+ {
+  "name": "ArrangeDesktop",
+  "zh": "记忆/恢复桌面图标位置",
+  "en": "Save & restore desktop icon positions"
+ },
+ {
+  "name": "Asana",
+  "zh": "Asana 任务通知",
+  "en": "Asana task notifications"
+ },
+ {
+  "name": "AutoMuteOnSleep",
+  "zh": "睡眠时自动静音",
+  "en": "Auto-mute on sleep"
+ },
+ {
+  "name": "BingDaily",
+  "zh": "每日 Bing 壁纸",
+  "en": "Bing daily wallpaper"
+ },
+ {
+  "name": "BonjourLauncher",
+  "zh": "网络服务启动器",
+  "en": "Bonjour service launcher"
+ },
+ {
+  "name": "BrewInfo",
+  "zh": "Homebrew 信息查询",
+  "en": "Homebrew info lookup"
+ },
+ {
+  "name": "Caffeine",
+  "zh": "菜单栏防休眠（咖啡杯）/ Menu bar caffeine toggle",
+  "en": "菜单栏防休眠（咖啡杯）/ Menu bar caffeine toggle"
+ },
+ {
+  "name": "Calendar",
+  "zh": "菜单栏日历",
+  "en": "Menu bar calendar"
+ },
+ {
+  "name": "Cherry",
+  "zh": "键盘按键提示",
+  "en": "Keyboard key hints"
+ },
+ {
+  "name": "CircleClock",
+  "zh": "圆形时钟菜单栏项",
+  "en": "Circular clock menu item"
+ },
+ {
+  "name": "ClipShow",
+  "zh": "剪贴板历史查看",
+  "en": "Clipboard history viewer"
+ },
+ {
+  "name": "ClipboardTool",
+  "zh": "剪贴板管理",
+  "en": "Clipboard manager"
+ },
+ {
+  "name": "ColorPicker",
+  "zh": "屏幕取色器",
+  "en": "Screen color picker"
+ },
+ {
+  "name": "Commander",
+  "zh": "命令面板",
+  "en": "Command palette"
+ },
+ {
+  "name": "CountDown",
+  "zh": "倒计时",
+  "en": "Countdown timer"
+ },
+ {
+  "name": "DeepLTranslate",
+  "zh": "DeepL 翻译",
+  "en": "DeepL translation"
+ },
+ {
+  "name": "EjectMenu",
+  "zh": "菜单栏弹出卷/盘",
+  "en": "Eject volumes menu"
+ },
+ {
+  "name": "EmmyLua",
+  "zh": "EmmyLua 补全支持",
+  "en": "EmmyLua completions"
+ },
+ {
+  "name": "Emojis",
+  "zh": "表情选择器",
+  "en": "Emoji picker"
+ },
+ {
+  "name": "EvernoteOpenAndTag",
+  "zh": "Evernote 快速记笔记",
+  "en": "Evernote quick notes"
+ },
+ {
+  "name": "FadeLogo",
+  "zh": "唤醒时渐显",
+  "en": "Fade-in on wake"
+ },
+ {
+  "name": "FnMate",
+  "zh": "Fn 键映射",
+  "en": "Fn key mappings"
+ },
+ {
+  "name": "ForceTouchMapper",
+  "zh": "触控板强制点击映射",
+  "en": "Force Touch mapping"
+ },
+ {
+  "name": "HCalendar",
+  "zh": "日历事件提醒",
+  "en": "Calendar event reminders"
+ },
+ {
+  "name": "HSKeybindings",
+  "zh": "快捷键速查面板",
+  "en": "Keybindings cheat sheet"
+ },
+ {
+  "name": "HSaria2",
+  "zh": "aria2 下载控制",
+  "en": "aria2 download control"
+ },
+ {
+  "name": "HSearch",
+  "zh": "聚合搜索",
+  "en": "Multi-engine search"
+ },
+ {
+  "name": "HeadphoneAutoPause",
+  "zh": "拔耳机自动暂停",
+  "en": "Auto-pause on headphone unplug"
+ },
+ {
+  "name": "HighSierraiTunesMediaFix",
+  "zh": "iTunes 媒体修复（旧系统）/ iTunes media fix (legacy)",
+  "en": "iTunes 媒体修复（旧系统）/ iTunes media fix (legacy)"
+ },
+ {
+  "name": "HoldToQuit",
+  "zh": "按住退出（SlowQuitApps 同款）/ Hold to quit (SlowQuitApps-style)",
+  "en": "按住退出（SlowQuitApps 同款）/ Hold to quit (SlowQuitApps-style)"
+ },
+ {
+  "name": "InputMethodIndicator",
+  "zh": "输入法指示器",
+  "en": "Input method indicator"
+ },
+ {
+  "name": "InputSourceSwitch",
+  "zh": "输入法自动切换",
+  "en": "Auto input-source switching"
+ },
+ {
+  "name": "KSheet",
+  "zh": "快捷键速查覆盖层",
+  "en": "Keybindings overlay"
+ },
+ {
+  "name": "Keychain",
+  "zh": "钥匙串访问",
+  "en": "Keychain access"
+ },
+ {
+  "name": "Leanpub",
+  "zh": "Leanpub 写作发布",
+  "en": "Leanpub publishing"
+ },
+ {
+  "name": "LeftRightHotkey",
+  "zh": "区分左右修饰键热键",
+  "en": "Left/right modifier hotkeys"
+ },
+ {
+  "name": "LookupSelection",
+  "zh": "选中内容查询",
+  "en": "Lookup selected text"
+ },
+ {
+  "name": "MenubarFlag",
+  "zh": "国旗/输入法菜单栏图标",
+  "en": "Country-flag menu icon"
+ },
+ {
+  "name": "MicMute",
+  "zh": "麦克风静音切换",
+  "en": "Microphone mute toggle"
+ },
+ {
+  "name": "MiddleClickDragScroll",
+  "zh": "中键拖拽滚动",
+  "en": "Middle-click drag scrolling"
+ },
+ {
+  "name": "MiroWindowsManager",
+  "zh": "窗口管理快捷键",
+  "en": "Window manager hotkeys"
+ },
+ {
+  "name": "ModalMgr",
+  "zh": "模态快捷键管理器",
+  "en": "Modal keybinding manager"
+ },
+ {
+  "name": "MountedVolumes",
+  "zh": "卷挂载菜单",
+  "en": "Mounted volumes menu"
+ },
+ {
+  "name": "MouseCircle",
+  "zh": "环形应用启动器",
+  "en": "Circular mouse launcher"
+ },
+ {
+  "name": "MouseFollowsFocus",
+  "zh": "鼠标跟随焦点窗口",
+  "en": "Mouse follows focused window"
+ },
+ {
+  "name": "MoveSpaces",
+  "zh": "跨 Space 移动窗口",
+  "en": "Move windows across Spaces"
+ },
+ {
+  "name": "MusicAppMediaFix",
+  "zh": "音乐 App 媒体键修复",
+  "en": "Music.app media-key fix"
+ },
+ {
+  "name": "OBS",
+  "zh": "OBS 直播控制",
+  "en": "OBS control"
+ },
+ {
+  "name": "PaperWM",
+  "zh": "平铺式窗口管理器",
+  "en": "Tiling window manager"
+ },
+ {
+  "name": "PasswordGenerator",
+  "zh": "密码生成器",
+  "en": "Password generator"
+ },
+ {
+  "name": "Pastebin",
+  "zh": "粘贴到 pastebin",
+  "en": "Paste to pastebin service"
+ },
+ {
+  "name": "PersonalHotspot",
+  "zh": "个人热点控制",
+  "en": "Personal hotspot control"
+ },
+ {
+  "name": "PopupTranslateSelection",
+  "zh": "选中弹窗翻译",
+  "en": "Pop-up translate selection"
+ },
+ {
+  "name": "PushToTalk",
+  "zh": "按住说话（麦克风）/ Push-to-talk microphone",
+  "en": "按住说话（麦克风）/ Push-to-talk microphone"
+ },
+ {
+  "name": "RecursiveBinder",
+  "zh": "递归按键绑定",
+  "en": "Recursive key bindings"
+ },
+ {
+  "name": "ReloadConfiguration",
+  "zh": "配置变更自动重载",
+  "en": "Auto-reload config"
+ },
+ {
+  "name": "RoundedCorners",
+  "zh": "圆角窗口",
+  "en": "Rounded window corners"
+ },
+ {
+  "name": "Seal",
+  "zh": "搜索/启动器（类 Spotlight）/ Spotlight-like launcher",
+  "en": "搜索/启动器（类 Spotlight）/ Spotlight-like launcher"
+ },
+ {
+  "name": "SendToOmniFocus",
+  "zh": "发送到 OmniFocus",
+  "en": "Send to OmniFocus"
+ },
+ {
+  "name": "Shade",
+  "zh": "一键盖黑屏",
+  "en": "One-key screen shade"
+ },
+ {
+  "name": "SleepCorners",
+  "zh": "睡眠触发角",
+  "en": "Hot-corner sleep"
+ },
+ {
+  "name": "SpeedMenu",
+  "zh": "网速菜单栏项",
+  "en": "Network speed menu item"
+ },
+ {
+  "name": "SpoonInstall",
+  "zh": "Spoon 自动安装/更新",
+  "en": "Spoon installer & updater"
+ },
+ {
+  "name": "TextClipboardHistory",
+  "zh": "剪贴板文本历史",
+  "en": "Text clipboard history"
+ },
+ {
+  "name": "TimeFlow",
+  "zh": "时间流逝显示",
+  "en": "Time-flow display"
+ },
+ {
+  "name": "TimeMachineProgress",
+  "zh": "Time Machine 进度",
+  "en": "Time Machine progress"
+ },
+ {
+  "name": "ToggleScreenRotation",
+  "zh": "旋转屏幕切换",
+  "en": "Toggle screen rotation"
+ },
+ {
+  "name": "ToggleSkypeMute",
+  "zh": "Skype 静音切换",
+  "en": "Toggle Skype mute"
+ },
+ {
+  "name": "Token",
+  "zh": "双因素令牌助手",
+  "en": "2FA token helper"
+ },
+ {
+  "name": "Tunnelblick",
+  "zh": "Tunnelblick VPN 控制",
+  "en": "Tunnelblick VPN control"
+ },
+ {
+  "name": "TurboBoost",
+  "zh": "CPU 睿频开关",
+  "en": "Turbo Boost toggle"
+ },
+ {
+  "name": "URLDispatcher",
+  "zh": "URL 分发规则",
+  "en": "URL dispatch rules"
+ },
+ {
+  "name": "USBDeviceActions",
+  "zh": "USB 设备触发动作",
+  "en": "USB device actions"
+ },
+ {
+  "name": "UniversalArchive",
+  "zh": "邮件/任务归档",
+  "en": "Universal archiving"
+ },
+ {
+  "name": "UnsplashRandom",
+  "zh": "随机 Unsplash 壁纸",
+  "en": "Random Unsplash wallpaper"
+ },
+ {
+  "name": "UnsplashZ",
+  "zh": "Unsplash 壁纸增强",
+  "en": "Unsplash wallpapers+"
+ },
+ {
+  "name": "VolumeScroll",
+  "zh": "滚轮调节音量",
+  "en": "Scroll-wheel volume"
+ },
+ {
+  "name": "WiFiTransitions",
+  "zh": "Wi-Fi 切换动作",
+  "en": "Wi-Fi transition actions"
+ },
+ {
+  "name": "WifiNotifier",
+  "zh": "Wi-Fi 状态通知",
+  "en": "Wi-Fi notifications"
+ },
+ {
+  "name": "WinWin",
+  "zh": "窗口管理快捷键集",
+  "en": "Window management hotkeys"
+ },
+ {
+  "name": "WindowGrid",
+  "zh": "网格选择窗口区域",
+  "en": "Grid window placement"
+ },
+ {
+  "name": "WindowHalfsAndThirds",
+  "zh": "半屏/三分屏布局",
+  "en": "Halfs & thirds layouts"
+ },
+ {
+  "name": "WindowScreenLeftAndRight",
+  "zh": "移到左/右屏",
+  "en": "Move to left/right screen"
+ },
+ {
+  "name": "WindowSigils",
+  "zh": "窗口标记定位",
+  "en": "Window sigils"
+ },
+ {
+  "name": "ZeroOffset",
+  "zh": "屏幕偏移修正",
+  "en": "Screen offset correction"
+ }
+]

@@ -34,6 +34,12 @@ HS_VERSION="1.1.1"
 HS_SHA256="11bb1c90faf5427f37c7bd4fe7eab9774ae43e1d5cb020c5b3088dac32849efa"
 HS_URL="https://github.com/Hammerspoon/hammerspoon/releases/download/${HS_VERSION}/Hammerspoon-${HS_VERSION}.zip"
 
+# Official Spoons library (bundled whole; enabled per-spoon via Settings).
+# sha256 = TOFU pin of the master tarball at vendoring time; refresh when
+# deliberately upgrading the Spoons set.
+SPOONS_SHA256="37bb226a2c3e688f6edf67c8bd7965fd22f2d8f9e025dbd0ee402ca4973ba49c"
+SPOONS_URL="https://github.com/Hammerspoon/Spoons/archive/refs/heads/master.tar.gz"
+
 # Third-party libraries upstream links into the app binary (Podfile.lock
 # versions), needed by the hs.* dylibs listed above. sha256 = release
 # tarball; CocoaHTTPServer is Hammerspoon's fork, pinned to a commit.
@@ -121,6 +127,25 @@ if ! grep -q '#import "DDLog.h"' "$HTTP_LOGGING"; then
 fi
 grep -q '#import "DDLog.h"' "$HTTP_LOGGING" || { echo "HTTPLogging.h patch failed" >&2; exit 1; }
 
+# --- official Spoons library ---
+SPOONS_TARBALL="$CACHE/Spoons-master.tar.gz"
+if [ -f "$SPOONS_TARBALL" ] && echo "$SPOONS_SHA256  $SPOONS_TARBALL" | shasum -a 256 -c - >/dev/null 2>&1; then
+  echo "cached: Spoons master (sha256 ok)"
+else
+  echo "downloading Spoons library"
+  curl -fL --retry 3 -o "$SPOONS_TARBALL" "$SPOONS_URL"
+  ACTUAL="$(shasum -a 256 "$SPOONS_TARBALL" | awk '{print $1}')"
+  [ "$ACTUAL" = "$SPOONS_SHA256" ] || { echo "sha256 mismatch for Spoons: expected $SPOONS_SHA256, got $ACTUAL" >&2; exit 1; }
+fi
+mkdir -p "$VENDOR/spoons"
+rm -rf "$CACHE/spoons-extract"
+mkdir -p "$CACHE/spoons-extract"
+tar -xzf "$SPOONS_TARBALL" -C "$CACHE/spoons-extract"
+SPOONS_SRC="$(find "$CACHE/spoons-extract" -maxdepth 2 -type d -name Source | head -1)"
+for bundle in "$SPOONS_SRC"/*.spoon; do
+  cp -R "$bundle" "$VENDOR/spoons/"
+done
+
 # --- patch: drop the "No config file found" system notification entirely.
 # The host UI (settings pane shows the active scripts folder; console log
 # below) already communicates the state, and a posted notification lingers
@@ -133,6 +158,25 @@ fi
 grep -q "MeiMacPlus-patched" "$CORESETUP" || sed -i '' 's|  if not hasinitfile then|  if not hasinitfile then -- MeiMacPlus-patched (notification removed)|' "$CORESETUP"
 grep -q "MeiMacPlus-patched" "$CORESETUP" || { echo "_coresetup notify patch failed" >&2; exit 1; }
 grep -q 'hs._notify("No config file found' "$CORESETUP" && { echo "notification removal failed" >&2; exit 1; } || true
+
+# --- patch: let bundled Spoons load via hs.loadSpoon without copying into
+# the user's config dir. The host exports MEI_SPOONS_PATH before creating
+# the Lua state; setup.lua appends it to package.path.
+SETUP_LUA="$VENDOR/setup.lua"
+if ! grep -q "MEI_SPOONS_PATH" "$SETUP_LUA"; then
+  python3 - "$SETUP_LUA" <<'PY'
+import sys
+path = sys.argv[1]
+s = open(path).read()
+old = "package.path = table.concat(paths, \";\")"
+new = ("local meisp = os.getenv(\"MEI_SPOONS_PATH\")\n"
+       "if meisp then table.insert(paths, meisp .. \"/?.spoon/init.lua\") end\n"
+       + old)
+assert old in s
+open(path, "w").write(s.replace(old, new, 1))
+PY
+fi
+grep -q "MEI_SPOONS_PATH" "$SETUP_LUA" || { echo "setup.lua spoons-path patch failed" >&2; exit 1; }
 
 # --- sanity: fail fast if upstream layout ever changes ---
 DYLIB_COUNT="$(find "$VENDOR/hs" -name '*.dylib' | wc -l | tr -d ' ')"
@@ -155,6 +199,9 @@ done
 [ -f "$TP_DIR/ORSSerialPort/Source/ORSSerialPort.m" ] || { echo "ORSSerialPort sources missing" >&2; exit 1; }
 [ -f "$TP_DIR/SocketRocket/SocketRocket/SRWebSocket.m" ] || { echo "SocketRocket sources missing" >&2; exit 1; }
 [ -f "$TP_DIR/ASCIImage/Core/PARImage+ASCIIInput.m" ] || { echo "ASCIImage sources missing" >&2; exit 1; }
+SPOON_COUNT="$(find "$VENDOR/spoons" -maxdepth 1 -name '*.spoon' | wc -l | tr -d ' ')"
+[ "$SPOON_COUNT" -ge 89 ] || { echo "expected >=89 spoons, got $SPOON_COUNT" >&2; exit 1; }
+[ -f "$VENDOR/spoons/Caffeine.spoon/init.lua" ] || { echo "Caffeine.spoon missing" >&2; exit 1; }
 
 # --- HSuicore: app-layer AX wrapper classes (HSapplication/HSuielement/HSwindow)
 # that libwindow/libapplication/libuielement resolve against the host binary.

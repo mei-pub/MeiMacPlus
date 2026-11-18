@@ -131,3 +131,7 @@
 "menubar.scriptHelp" = "脚本帮助…";
 "settings.script.help" = "帮助…";
 "scripthelp.title" = "脚本帮助";
+"settings.spoons.section" = "内置 Spoon 管理";
+"settings.spoons.filter" = "筛选 / 搜索…";
+"settings.spoons.count" = "已启用 %d / %d";
+"settings.spoons.footer" = "89 个官方 Spoon 已全部内置、默认关闭。打开开关即加载（并调用 start()）；详细文档见菜单栏 → 脚本帮助 → Spoons。";
