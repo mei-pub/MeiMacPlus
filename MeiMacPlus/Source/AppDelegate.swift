@@ -474,12 +474,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // user settings supply only the parameters. bindHotkeys-capable
             // spoons get their OFFICIAL mapping key (toggle/show/toggleShade…).
             var mappingKey = ""
-            if let usage = SpoonUsageStore.usage(for: name),
-               usage.triggers?.contains("hotkey") == true,
-               let mk = usage.mappingKey, !mk.isEmpty {
-                mappingKey = mk
+            var requires: [String] = []
+            if let usage = SpoonUsageStore.usage(for: name) {
+                if usage.triggers?.contains("hotkey") == true,
+                   let mk = usage.mappingKey, !mk.isEmpty {
+                    mappingKey = mk
+                }
+                requires = usage.requires ?? []
             }
-            var parts = ["name = '\(name)'", "mappingKey = '\(mappingKey)'"]
+            let reqList = requires.map { "'\($0)'" }.joined(separator: ",")
+            var parts = ["name = '\(name)'", "mappingKey = '\(mappingKey)'",
+                         "requires = {\(reqList)}"]
             if let t = triggers[name], t.type == "hotkey" {
                 let mods = t.mods.map { "'\($0)'" }.joined(separator: ",")
                 parts.append("mods = {\(mods)}")
@@ -490,6 +495,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         LuaRuntime.shared.run(
             "local configs = { \(configs.joined(separator: ", ")) } " +
             "for _, cfg in ipairs(configs) do " +
+            "for _, dep in ipairs(cfg.requires or {}) do " +
+            "if not spoon[dep] then " +
+            "local okd, depObj = pcall(hs.loadSpoon, dep) " +
+            "if okd and depObj then " +
+            "spoon[dep] = depObj " +
+            "if depObj.start then pcall(depObj.start, depObj) end " +
+            "end " +
+            "end " +
+            "end " +
             "local ok, sp = pcall(hs.loadSpoon, cfg.name) " +
             "if ok and sp then " +
             "local function activate() " +

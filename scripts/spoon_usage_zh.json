@@ -118,6 +118,9 @@
   "text": "启用后绑定快捷键，弹出剪贴板多条历史内容，点选即粘贴。",
   "triggers": [
    "hotkey"
+  ],
+  "requires": [
+   "ModalMgr"
   ]
  },
  "ClipboardTool": {
