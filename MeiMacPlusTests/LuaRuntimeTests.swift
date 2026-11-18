@@ -299,10 +299,18 @@ final class HostIntegrationTests: XCTestCase {
 final class ScriptHelpAssetsTests: XCTestCase {
     func testHelpAssetsExist() {
         let bundle = Bundle.main
-        let helpPath = (bundle.resourceURL ?? URL(fileURLWithPath: "/missing"))
-            .appendingPathComponent("ScriptHelp.index.html").path
-        XCTAssertTrue(FileManager.default.fileExists(atPath: helpPath),
+        let resources = bundle.resourceURL ?? URL(fileURLWithPath: "/missing")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: resources.appendingPathComponent("ScriptHelp.index.html").path),
                       "help page missing")
+        // The modules/API tabs read window.__DOCS__ from this file (WKWebView
+        // cannot fetch() file:// URLs).
+        let dataPath = resources.appendingPathComponent("ScriptHelp.data.js").path
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dataPath),
+                      "help data missing — Modules/API tabs would be empty")
+        if let head = try? String(contentsOfFile: dataPath, encoding: .utf8).prefix(30) {
+            XCTAssertTrue(head.hasPrefix("window.__DOCS__="), "data.js has no assignment prefix")
+        }
         XCTAssertNotNil(bundle.url(forResource: "docs", withExtension: "json"),
                         "docs.json missing — API reference would be empty")
     }

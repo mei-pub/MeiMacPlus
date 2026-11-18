@@ -8,13 +8,14 @@ final class ScriptHelpWindowController: NSWindowController, NSWindowDelegate {
 
     init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 960, height: 680),
+            contentRect: NSRect(x: 0, y: 0, width: 1150, height: 800),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         window.title = L("scripthelp.title")
         window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 880, height: 560)
         window.center()
 
         let webView = WKWebView()

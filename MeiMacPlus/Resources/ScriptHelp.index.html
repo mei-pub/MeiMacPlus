@@ -287,12 +287,9 @@ document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === t.dataset.t));
 });
 
-// fetch bundled docs
-let DOCS = [];
-fetch('docs.json').then(r => r.json()).then(d => {
-  DOCS = d;
-  renderApiList('');
-});
+// Docs come from ScriptHelp.data.js (window.__DOCS__) — WKWebView cannot
+// fetch() file:// resources, but <script src> loads them fine.
+let DOCS = window.__DOCS__ || [];
 
 // ---- modules table ----
 function renderMods(q) {
@@ -352,8 +349,8 @@ function renderApiDetail(m) {
 }
 $('#apiq').oninput = e => renderApiList(e.target.value);
 
-// initial module table once docs land
-fetch('docs.json').then(r => r.json()).then(d => { renderMods(''); });
+renderMods('');
+renderApiList('');
 </script>
 </body>
 </html>
