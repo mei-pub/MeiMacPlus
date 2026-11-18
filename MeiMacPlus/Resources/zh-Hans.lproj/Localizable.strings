@@ -152,3 +152,9 @@
 "settings.behavior.ax.ok" = "辅助功能已授权，一切就绪！";
 "settings.behavior.ax.no" = "辅助功能未授权";
 "settings.behavior.ax.grant" = "去授权...";
+"settings.spoons.trigger.type" = "触发方式";
+"settings.spoons.trigger.auto" = "自动";
+"settings.spoons.trigger.hotkey" = "快捷键";
+"settings.spoons.trigger.interval" = "定时";
+"settings.spoons.trigger.minutes" = "分钟";
+"settings.spoons.trigger.autoHint" = "启用的 Spoon 以自身默认行为运行";

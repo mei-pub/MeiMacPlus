@@ -19,8 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var scriptHelpWindow: ScriptHelpWindowController?
 
     let scriptLogStore = ScriptLogStore()
-    /// The spoon set the running Lua environment was booted with.
-    private var lastLoadedSpoons: Set<String> = []
+    /// Serialized script state (dir + spoons + triggers) the running Lua
+    /// environment was booted with; divergence triggers a reload.
+    private var lastLoadedScriptState: String = ""
 
     /// Guards settings.keepAwakeOnLidClose assignments that must NOT kick
     /// off another helper round-trip (launch-time sync, revert-after-failure).
@@ -399,19 +400,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             setenv("MEI_SPOONS_PATH", spoonsURL.path, 1)
         }
 
-        // A running runtime survives only if it is already on the resolved
-        // directory AND the enabled-spoon set is unchanged; either change
-        // must restart the environment instead of silently keeping the old one.
+        // A running runtime survives only if the resolved directory, enabled
+        // spoon set AND trigger configs are all unchanged; any change restarts
+        // the environment instead of silently keeping the old one.
         let enabledSpoons = Set(settings.spoonsEnabled)
-        if runtime.isRunning && runtime.configDir == configDir.path
-            && lastLoadedSpoons == enabledSpoons { return }
+        let state = "\(configDir.path)|\(enabledSpoons.sorted().joined(separator: ","))|\(settings.spoonsTriggers.isEmpty ? "" : String(describing: settings.spoonsTriggers))"
+        if runtime.isRunning && lastLoadedScriptState == state { return }
         if runtime.isRunning {
             sessionLog.notice("script config changed — reloading Lua runtime")
             runtime.stop()
         }
         if runtime.start(withConfigDir: configDir.path) {
-            lastLoadedSpoons = enabledSpoons
-            loadEnabledSpoons(Array(enabledSpoons))
+            lastLoadedScriptState = state
+            loadEnabledSpoons(Array(enabledSpoons), settings.spoonsTriggers)
             sessionLog.notice("Lua runtime started (config: \(configDir.path, privacy: .public))")
         } else {
             sessionLog.error("Lua runtime failed to start (vendored runtime incomplete?)")
@@ -470,17 +471,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Load the enabled bundled Spoons into the freshly booted runtime.
     /// Each spoon is isolated in pcall: a broken spoon logs instead of
     /// aborting the rest. start() is called when the spoon provides it.
-    private func loadEnabledSpoons(_ names: [String]) {
+    private func loadEnabledSpoons(_ names: [String],
+                                   _ triggers: [String: SpoonTrigger]) {
         guard !names.isEmpty else { return }
-        let list = names.map { "\"" + $0 + "\"" }
-            .joined(separator: ",")
+        var configs: [String] = []
+        for name in names {
+            var parts = ["name = '\(name)'"]
+            if let t = triggers[name], t.type != "auto" {
+                parts.append("type = '\(t.type)'")
+                let mods = t.mods.map { "'\($0)'" }.joined(separator: ",")
+                parts.append("mods = {\(mods)}")
+                parts.append("key = '\(t.key)'")
+                parts.append("minutes = \(t.minutes)")
+            }
+            configs.append("{ \(parts.joined(separator: ", ")) }")
+        }
         LuaRuntime.shared.run(
-            "for _, n in ipairs({\(list)}) do " +
-            "local ok, err = pcall(function() " +
-            "local sp = hs.loadSpoon(n) " +
-            "if sp and sp.start then sp:start() end " +
-            "end) " +
-            "if not ok then print('-- spoon ' .. n .. ' failed: ' .. tostring(err)) end " +
+            "local configs = { \(configs.joined(separator: ", ")) } " +
+            "for _, cfg in ipairs(configs) do " +
+            "local ok, sp = pcall(hs.loadSpoon, cfg.name) " +
+            "if ok and sp then " +
+            "if sp.start then pcall(sp.start, sp) end " +
+            "local function activate() " +
+            "if sp.toggle then sp:toggle() " +
+            "elseif sp.show then sp:show() " +
+            "elseif sp.run then sp:run() " +
+            "else print('-- spoon ' .. cfg.name .. ' has no toggle/show/run to trigger') end " +
+            "end " +
+            "if cfg.type == 'hotkey' and cfg.key ~= '' then " +
+            "pcall(hs.hotkey.bind, cfg.mods, cfg.key, activate) " +
+            "elseif cfg.type == 'interval' then " +
+            "hs.timer.doEvery(cfg.minutes * 60, activate) " +
+            "end " +
+            "else print('-- spoon ' .. cfg.name .. ' failed to load') end " +
             "end")
         sessionLog.notice("loaded \(names.count) spoon(s)")
     }

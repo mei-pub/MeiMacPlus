@@ -1,6 +1,17 @@
 import Foundation
 import Combine
 
+/// How an enabled bundled Spoon is triggered. Persisted as JSON.
+///   auto    — load + start() only (spoon's own default behavior)
+///   hotkey  — bind mods+key to the spoon's toggle/show/run action
+///   interval— run that action every N minutes
+struct SpoonTrigger: Codable, Equatable {
+    var type: String = "auto"
+    var mods: [String] = []
+    var key: String = ""
+    var minutes: Int = 5
+}
+
 /// User-facing settings, persisted in `UserDefaults`.
 ///
 /// Key names intentionally mirror SlowQuitApps (`delay`, `whitelist`,
@@ -42,6 +53,7 @@ final class AppSettings: ObservableObject {
             DefaultsKeys.scriptEnabled: false,
         DefaultsKeys.scriptCustomPath: "",
         DefaultsKeys.spoonsEnabled: [String](),
+        DefaultsKeys.spoonsTriggers: "{}",
         DefaultsKeys.dockIconVisible: false,
         DefaultsKeys.menuBarIconVisible: true,
         DefaultsKeys.consoleOnTop: false,
@@ -62,6 +74,12 @@ final class AppSettings: ObservableObject {
         scriptEnabled = defaults.bool(forKey: DefaultsKeys.scriptEnabled)
         scriptCustomPath = defaults.string(forKey: DefaultsKeys.scriptCustomPath) ?? ""
         spoonsEnabled = Set(defaults.stringArray(forKey: DefaultsKeys.spoonsEnabled) ?? [])
+        spoonsTriggers = [:]
+        if let json = defaults.string(forKey: DefaultsKeys.spoonsTriggers),
+           let data = json.data(using: .utf8),
+           let decoded = try? JSONDecoder().decode([String: SpoonTrigger].self, from: data) {
+            spoonsTriggers = decoded
+        }
         dockIconVisible = defaults.bool(forKey: DefaultsKeys.dockIconVisible)
         menuBarIconVisible = defaults.bool(forKey: DefaultsKeys.menuBarIconVisible)
         consoleOnTop = defaults.bool(forKey: DefaultsKeys.consoleOnTop)
@@ -171,6 +189,18 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(Array(spoonsEnabled).sorted(), forKey: DefaultsKeys.spoonsEnabled); onChange?(.script) }
     }
 
+    /// Per-spoon trigger configuration (keyed by spoon name). Changes
+    /// reload the runtime like the enable switches do.
+    @Published var spoonsTriggers: [String: SpoonTrigger] {
+        didSet {
+            if let data = try? JSONEncoder().encode(spoonsTriggers),
+               let json = String(data: data, encoding: .utf8) {
+                defaults.set(json, forKey: DefaultsKeys.spoonsTriggers)
+            }
+            onChange?(.script)
+        }
+    }
+
     // MARK: - App behavior (Hammerspoon-preferences parity)
 
     /// Show the dock icon (promotes the accessory app to regular). Off by
@@ -217,6 +247,7 @@ final class AppSettings: ObservableObject {
         static let scriptEnabled = "scriptEnabled"
         static let scriptCustomPath = "scriptCustomPath"
         static let spoonsEnabled = "spoonsEnabled"
+        static let spoonsTriggers = "spoonsTriggers"
         static let dockIconVisible = "dockIconVisible"
         static let menuBarIconVisible = "menuBarIconVisible"
         static let consoleOnTop = "consoleOnTop"
