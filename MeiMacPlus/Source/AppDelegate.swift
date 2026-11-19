@@ -499,27 +499,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             "meiSpoonLoadState = 'STARTED' " +
             "spoon = spoon or {} " +
             "meiPanels = meiPanels or {} " +
+            // Outside-click closer only (no global Esc hotkey: it would fight
+            // the OS). Esc closes panels in our own windows via the app-side
+            // WindowEscapeCloser; spoon canvases get click-outside closing.
             "if not meiPanelMgr then " +
             "meiPanelMgr = (function() " +
             "local mgr = {} " +
-            "local esc = hs.hotkey.new({}, 'esc', function() " +
-            "for _, p in ipairs(meiPanels) do if p.canvas:isShowing() then p.canvas:hide() end end " +
-            "mgr.sync() end) " +
             "local tap = hs.eventtap.new({hs.eventtap.event.types.leftMouseDown}, function(e) " +
             "local pt = e:location() " +
             "for _, p in ipairs(meiPanels) do " +
-            "if p.canvas:isShowing() then " +
-            "local f = p.canvas:frame() " +
-            "if f and not (pt.x >= f.x and pt.x <= f.x + f.w and pt.y >= f.y and pt.y <= f.y + f.h) then " +
-            "p.canvas:hide() mgr.sync() return true " +
+            "if p.canvas and p.canvas:isShowing() then " +
+            "local okf, f = pcall(function() return p.canvas:frame() end) " +
+            "if okf and f then " +
+            "local inside = pt.x >= f.x and pt.x <= f.x + f.w and pt.y >= f.y and pt.y <= f.y + f.h " +
+            "if not inside then pcall(function() p.canvas:hide() end) end " +
             "end " +
             "end " +
             "end " +
             "return false end) " +
             "function mgr.sync() " +
             "local any = false " +
-            "for _, p in ipairs(meiPanels) do if p.canvas and p.canvas:isShowing() then any = true end end " +
-            "if any then esc:start() tap:start() else esc:stop() tap:stop() end " +
+            "for _, p in ipairs(meiPanels) do " +
+            "if p.canvas and pcall(function() return p.canvas:isShowing() end) then any = true end " +
+            "end " +
+            "if any then tap:start() else tap:stop() end " +
             "end " +
             "function mgr.register(c) table.insert(meiPanels, {canvas = c}) end " +
             "return mgr " +
