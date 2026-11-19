@@ -560,6 +560,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             "if not okb2 then print('-- spoon ' .. cfg.name .. ' hotkey bind failed: ' .. tostring(errb2)) end " +
             "end " +
             "if sp.start then pcall(sp.start, sp) end " +
+            // ClipShow parity: upstream usage has the USER create the
+            // "clipshowM" ModalMgr modal and bind ClipShow's methods to it —
+            // without it the panel's key sidebar is empty and nothing is
+            // actionable. We provision that modal with the spoon's own
+            // documented methods (see ClipShow docs.json).
+            "if cfg.name == 'ClipShow' and spoon.ModalMgr and not spoon.ModalMgr.modal_list['clipshowM'] then " +
+            "local okm, m = pcall(function() " +
+            // ModalMgr:new(id) registers hs.hotkey.modal into modal_list and
+            // returns nothing — fetch it back after creation.
+            "spoon.ModalMgr:new('clipshowM') " +
+            "local modal = spoon.ModalMgr.modal_list['clipshowM'] " +
+            "if sp.saveToSession then modal:bind('', 's', 'Save to session', function() sp:saveToSession() end) end " +
+            "if sp.saveToFile then modal:bind('', 'f', 'Save to file', function() sp:saveToFile() end) end " +
+            "if sp.restoreLastSession then modal:bind('', 'r', 'Restore last session', function() sp:restoreLastSession() end) end " +
+            "if sp.openInBrowserWithRef then modal:bind('', 'o', 'Open in browser', function() sp:openInBrowserWithRef() end) end " +
+            "end) " +
+            "if not okm then print('-- clipshowM modal setup failed: ' .. tostring(m)) end " +
+            "end " +
             "table.insert(results, cfg.name .. '=' .. tostring(ok) .. ':' .. tostring(sp)) " +
             "else print('-- spoon ' .. cfg.name .. ' failed to load: ' .. tostring(sp)) " +
             "table.insert(results, cfg.name .. '=FAIL:' .. tostring(sp)) end " +
